@@ -535,8 +535,7 @@
         return;
       }
       if (Notification.permission === 'granted') {
-        enableBtn.textContent = '✅ Notifications enabled';
-        enableBtn.disabled = true;
+        document.getElementById('notif-section').style.display = 'none';
       } else if (Notification.permission === 'denied') {
         enableBtn.textContent = '🚫 Notifications blocked — allow in browser settings';
         enableBtn.disabled = true;
