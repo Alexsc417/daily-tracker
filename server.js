@@ -155,16 +155,12 @@ cron.schedule('0 18 * * *', () => {
 // ── ICON (generated purple square with checkmark) ─────────────────────
 function iconSvg(size) {
   const r = Math.round(size * 0.18);
-  const aSize = Math.round(size * 0.58);
-  const dtSize = Math.round(size * 0.22);
-  const aY = Math.round(size * 0.63);
-  const dtY = Math.round(size * 0.84);
+  const fontSize = Math.round(size * 0.42);
+  const y = Math.round(size * 0.62);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" rx="${r}" fill="#080810"/>
-  <text x="${size/2}" y="${aY}" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
-    font-size="${aSize}" font-weight="900" fill="none" stroke="#7c3aed" stroke-width="${Math.round(size*0.03)}">A</text>
-  <text x="${size/2}" y="${dtY}" text-anchor="middle" font-family="Arial, sans-serif"
-    font-size="${dtSize}" font-weight="600" fill="#7c3aed">dt</text>
+  <text x="${size/2}" y="${y}" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
+    font-size="${fontSize}" font-weight="900" fill="#7c3aed">adt</text>
 </svg>`;
 }
 
