@@ -439,6 +439,15 @@
 
     // ── RESET ─────────────────────────────────────────────────────────────
     document.getElementById('reset-btn').addEventListener('click', () => {
+      // If today was already counted as a completed day, undo it
+      if (lastDone === todayKey()) {
+        streak = Math.max(streak - 1, 0);
+        totalDays = Math.max(totalDays - 1, 0);
+        lastDone = null;
+        save('streak', streak);
+        save('total_days', totalDays);
+        save('last_done_date', null);
+      }
       completions = {};
       save('completions_' + todayKey(), completions);
       render();
