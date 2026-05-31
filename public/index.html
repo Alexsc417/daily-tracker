@@ -4,6 +4,12 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Alex's Daily Tracker</title>
+  <link rel="manifest" href="/manifest.json" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
+  <meta name="apple-mobile-web-app-title" content="Tracker" />
+  <link rel="apple-touch-icon" href="/icon-192.png" />
+  <meta name="theme-color" content="#7c3aed" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
@@ -434,6 +440,12 @@
         save('streak', streak);
         totalDays += 1;
         save('total_days', totalDays);
+        // Tell server tasks are done so it skips the 6pm reminder
+        fetch('/api/tasks-complete', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ date: today }),
+        }).catch(() => {});
       }
     }
 
@@ -447,6 +459,8 @@
         save('streak', streak);
         save('total_days', totalDays);
         save('last_done_date', null);
+        // Tell server tasks are no longer complete so 6pm reminder fires again
+        fetch('/api/tasks-reset', { method: 'POST' }).catch(() => {});
       }
       completions = {};
       save('completions_' + todayKey(), completions);
@@ -472,6 +486,54 @@
 
     // ── INIT ─────────────────────────────────────────────────────────────
     render();
+
+    // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────
+    function urlBase64ToUint8Array(base64String) {
+      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
+      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
+      const raw = atob(base64);
+      return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    }
+
+    async function initNotifications() {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+      try {
+        const reg = await navigator.serviceWorker.register('/sw.js');
+        await navigator.serviceWorker.ready;
+
+        // Ask for permission on first load
+        let permission = Notification.permission;
+        if (permission === 'default') {
+          permission = await Notification.requestPermission();
+        }
+        if (permission !== 'granted') return;
+
+        // Get VAPID public key
+        const res = await fetch('/api/vapid-public-key');
+        const { publicKey } = await res.json();
+
+        // Subscribe (returns existing subscription if already subscribed)
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) {
+          sub = await reg.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(publicKey),
+          });
+        }
+
+        // Send subscription to server
+        await fetch('/api/subscribe', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(sub),
+        });
+
+      } catch (err) {
+        console.warn('Notification setup failed:', err);
+      }
+    }
+
+    initNotifications();
   </script>
 </body>
 </html>
