@@ -367,7 +367,10 @@
       } else if (day === 1 || day === 2 || day === 3) { // Mon Tue Wed
         tasks.push({ id: 'coldemail', label: 'Schedule 30 cold emails (send tomorrow)', badge: '30' });
       }
-      // Fri (5) & Sat (6) — daily only, nothing extra
+      if (day === 5) { // Friday
+        tasks.push({ id: 'updateleads', label: 'Update leads list', badge: '📋' });
+      }
+      // Sat (6) — daily only, nothing extra
       return tasks;
     }
 
