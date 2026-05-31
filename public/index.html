@@ -538,7 +538,8 @@
         return;
       }
       if (Notification.permission === 'granted') {
-        document.getElementById('notif-section').style.display = 'none';
+        enableBtn.textContent = '✅ Notifications enabled';
+        enableBtn.disabled = true;
       } else if (Notification.permission === 'denied') {
         enableBtn.textContent = '🚫 Notifications blocked — allow in browser settings';
         enableBtn.disabled = true;
