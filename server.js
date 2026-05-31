@@ -90,6 +90,19 @@ app.post('/api/tasks-reset', (req, res) => {
   res.json({ ok: true });
 });
 
+app.post('/api/test-notification', async (req, res) => {
+  try {
+    await sendPush({
+      title: 'Test notification 💜',
+      body: "It's working Alex — push notifications are live!",
+      tag: 'test',
+    });
+    res.json({ ok: true });
+  } catch (err) {
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── SCHEDULED NOTIFICATIONS (UK time) ────────────────────────────────
 
 // 9:00 AM — morning nudge every day

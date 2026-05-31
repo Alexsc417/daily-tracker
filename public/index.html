@@ -247,6 +247,30 @@
       margin-bottom: 6px;
     }
     .stat-label { font-size: 0.75rem; color: #475569; font-weight: 500; }
+
+    /* NOTIFICATION BUTTONS */
+    .notif-btn {
+      flex: 1;
+      background: #7c3aed;
+      border: none;
+      border-radius: 12px;
+      color: #fff;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 600;
+      padding: 14px 18px;
+      cursor: pointer;
+      transition: background 0.15s, opacity 0.15s;
+    }
+    .notif-btn:hover { background: #6d28d9; }
+    .notif-btn:disabled { opacity: 0.4; cursor: default; background: #7c3aed; }
+    .notif-btn-secondary {
+      flex: 0 0 auto;
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.3);
+      color: #a78bfa;
+    }
+    .notif-btn-secondary:hover { background: rgba(124,58,237,0.25); }
   </style>
 </head>
 <body>
@@ -305,6 +329,12 @@
           <div class="stat-label">Total days done</div>
         </div>
       </div>
+    </div>
+
+    <!-- NOTIFICATION BUTTONS -->
+    <div id="notif-section" style="display:flex; gap:10px;">
+      <button class="notif-btn" id="enable-notif-btn">🔔 Enable Notifications</button>
+      <button class="notif-btn notif-btn-secondary" id="test-notif-btn">Test</button>
     </div>
 
   </div>
@@ -488,6 +518,9 @@
     render();
 
     // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────
+    const enableBtn = document.getElementById('enable-notif-btn');
+    const testBtn   = document.getElementById('test-notif-btn');
+
     function urlBase64ToUint8Array(base64String) {
       const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
       const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
@@ -495,24 +528,43 @@
       return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
     }
 
-    async function initNotifications() {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
+    function updateEnableBtn() {
+      if (!('Notification' in window)) {
+        enableBtn.textContent = '🔕 Not supported';
+        enableBtn.disabled = true;
+        return;
+      }
+      if (Notification.permission === 'granted') {
+        enableBtn.textContent = '✅ Notifications enabled';
+        enableBtn.disabled = true;
+      } else if (Notification.permission === 'denied') {
+        enableBtn.textContent = '🚫 Notifications blocked — allow in browser settings';
+        enableBtn.disabled = true;
+      } else {
+        enableBtn.textContent = '🔔 Enable Notifications';
+        enableBtn.disabled = false;
+      }
+    }
+
+    let swReg = null;
+
+    async function registerSW() {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
+        swReg = reg;
+        return reg;
+      } catch (err) {
+        console.warn('SW registration failed:', err);
+        return null;
+      }
+    }
 
-        // Ask for permission on first load
-        let permission = Notification.permission;
-        if (permission === 'default') {
-          permission = await Notification.requestPermission();
-        }
-        if (permission !== 'granted') return;
-
-        // Get VAPID public key
+    async function subscribeAndSave(reg) {
+      try {
         const res = await fetch('/api/vapid-public-key');
         const { publicKey } = await res.json();
-
-        // Subscribe (returns existing subscription if already subscribed)
         let sub = await reg.pushManager.getSubscription();
         if (!sub) {
           sub = await reg.pushManager.subscribe({
@@ -520,20 +572,53 @@
             applicationServerKey: urlBase64ToUint8Array(publicKey),
           });
         }
-
-        // Send subscription to server
         await fetch('/api/subscribe', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(sub),
         });
-
+        return true;
       } catch (err) {
-        console.warn('Notification setup failed:', err);
+        console.warn('Subscribe failed:', err);
+        return false;
       }
     }
 
-    initNotifications();
+    // Enable button — this is a user gesture so browser WILL show the popup
+    enableBtn.addEventListener('click', async () => {
+      enableBtn.disabled = true;
+      enableBtn.textContent = 'Setting up...';
+      const reg = swReg || await registerSW();
+      if (!reg) { updateEnableBtn(); return; }
+      const permission = await Notification.requestPermission();
+      if (permission === 'granted') {
+        await subscribeAndSave(reg);
+      }
+      updateEnableBtn();
+    });
+
+    // Test button — fires a test push via server
+    testBtn.addEventListener('click', async () => {
+      testBtn.textContent = 'Sending...';
+      testBtn.disabled = true;
+      try {
+        await fetch('/api/test-notification', { method: 'POST' });
+        testBtn.textContent = 'Sent ✓';
+      } catch {
+        testBtn.textContent = 'Failed';
+      }
+      setTimeout(() => { testBtn.textContent = 'Test'; testBtn.disabled = false; }, 2000);
+    });
+
+    // On load: register SW silently, and if already granted — re-subscribe
+    (async () => {
+      updateEnableBtn();
+      const reg = await registerSW();
+      if (reg && Notification.permission === 'granted') {
+        await subscribeAndSave(reg);
+        updateEnableBtn();
+      }
+    })();
   </script>
 </body>
 </html>
