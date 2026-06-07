@@ -14,28 +14,61 @@
   <style>
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-    body {
+    html, body {
+      height: 100%;
+      overflow: hidden;
       background: #080810;
       color: #e2e8f0;
       font-family: 'Space Grotesk', sans-serif;
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 24px 16px 48px;
     }
 
-    .container {
-      width: 100%;
-      max-width: 480px;
+    /* PAGE DOTS */
+    .dots {
+      position: fixed;
+      top: 16px;
+      left: 50%;
+      transform: translateX(-50%);
+      display: flex;
+      gap: 7px;
+      z-index: 100;
+    }
+    .dot {
+      width: 7px;
+      height: 7px;
+      border-radius: 50%;
+      background: rgba(124,58,237,0.25);
+      transition: all 0.25s;
+    }
+    .dot.active {
+      background: #a78bfa;
+      width: 20px;
+      border-radius: 99px;
+    }
+
+    /* SLIDER */
+    .slider {
+      display: flex;
+      width: 200vw;
+      height: 100vh;
+      overflow: hidden;
+      transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide {
+      width: 100vw;
+      height: 100vh;
+      overflow-y: auto;
+      padding: 52px 16px 48px;
       display: flex;
       flex-direction: column;
       gap: 14px;
+      -webkit-overflow-scrolling: touch;
     }
 
     /* HEADER */
-    .header { padding: 8px 0 4px; }
+    .header { padding: 4px 0 2px; }
     .header h1 {
-      font-size: 2rem;
+      font-size: 1.9rem;
       font-weight: 700;
       background: linear-gradient(135deg, #a78bfa, #7c3aed);
       -webkit-background-clip: text;
@@ -45,7 +78,7 @@
     }
     .header .date {
       color: #64748b;
-      font-size: 0.9rem;
+      font-size: 0.85rem;
       margin-top: 4px;
       font-weight: 400;
     }
@@ -55,8 +88,8 @@
       background: linear-gradient(135deg, rgba(124,58,237,0.18), rgba(167,139,250,0.10));
       border: 1px solid rgba(124,58,237,0.3);
       border-radius: 12px;
-      padding: 14px 18px;
-      font-size: 0.95rem;
+      padding: 13px 16px;
+      font-size: 0.92rem;
       font-weight: 500;
       color: #a78bfa;
     }
@@ -66,15 +99,15 @@
       background: #0f0f1a;
       border: 1px solid rgba(255,255,255,0.06);
       border-radius: 16px;
-      padding: 20px;
+      padding: 18px;
     }
     .card-label {
-      font-size: 0.7rem;
+      font-size: 0.68rem;
       font-weight: 600;
       letter-spacing: 0.1em;
       text-transform: uppercase;
       color: #7c3aed;
-      margin-bottom: 16px;
+      margin-bottom: 14px;
     }
 
     /* TASKS */
@@ -83,20 +116,21 @@
       display: flex;
       align-items: center;
       gap: 12px;
-      padding: 12px 14px;
+      padding: 13px 14px;
       background: rgba(255,255,255,0.03);
       border: 1px solid rgba(255,255,255,0.05);
       border-radius: 10px;
       cursor: pointer;
       transition: background 0.15s, border-color 0.15s;
       user-select: none;
+      -webkit-tap-highlight-color: transparent;
     }
-    .task-item:hover { background: rgba(124,58,237,0.08); border-color: rgba(124,58,237,0.2); }
+    .task-item:active { background: rgba(124,58,237,0.08); }
     .task-item.done { background: rgba(124,58,237,0.06); border-color: rgba(124,58,237,0.15); }
 
     .task-checkbox {
-      width: 20px;
-      height: 20px;
+      width: 22px;
+      height: 22px;
       border-radius: 6px;
       border: 2px solid rgba(124,58,237,0.4);
       background: transparent;
@@ -106,10 +140,7 @@
       justify-content: center;
       transition: all 0.15s;
     }
-    .task-item.done .task-checkbox {
-      background: #7c3aed;
-      border-color: #7c3aed;
-    }
+    .task-item.done .task-checkbox { background: #7c3aed; border-color: #7c3aed; }
     .task-checkbox svg { display: none; }
     .task-item.done .task-checkbox svg { display: block; }
 
@@ -120,10 +151,7 @@
       color: #cbd5e1;
       transition: color 0.15s;
     }
-    .task-item.done .task-label {
-      text-decoration: line-through;
-      color: #475569;
-    }
+    .task-item.done .task-label { text-decoration: line-through; color: #475569; }
 
     .task-badge {
       font-size: 0.72rem;
@@ -136,11 +164,7 @@
     }
     .task-item.done .task-badge { color: #4a3a6b; background: rgba(124,58,237,0.07); }
 
-    .task-footer {
-      display: flex;
-      justify-content: flex-end;
-      margin-top: 14px;
-    }
+    .task-footer { display: flex; justify-content: flex-end; margin-top: 14px; }
     .reset-btn {
       background: none;
       border: 1px solid rgba(255,255,255,0.08);
@@ -148,235 +172,11 @@
       font-family: 'Space Grotesk', sans-serif;
       font-size: 0.75rem;
       font-weight: 500;
-      padding: 5px 12px;
+      padding: 6px 14px;
       border-radius: 7px;
       cursor: pointer;
-      transition: all 0.15s;
+      -webkit-tap-highlight-color: transparent;
     }
-    .reset-btn:hover { border-color: rgba(124,58,237,0.4); color: #a78bfa; }
-
-    /* FIRST CLIENT GOAL */
-    .client-goal-row {
-      display: flex;
-      align-items: center;
-      gap: 16px;
-    }
-    .client-toggle {
-      position: relative;
-      width: 52px;
-      height: 28px;
-      flex-shrink: 0;
-    }
-    .client-toggle input { opacity: 0; width: 0; height: 0; }
-    .client-toggle-slider {
-      position: absolute;
-      inset: 0;
-      background: rgba(255,255,255,0.08);
-      border: 1px solid rgba(255,255,255,0.1);
-      border-radius: 99px;
-      cursor: pointer;
-      transition: all 0.25s;
-    }
-    .client-toggle-slider::before {
-      content: '';
-      position: absolute;
-      left: 4px;
-      top: 50%;
-      transform: translateY(-50%);
-      width: 18px;
-      height: 18px;
-      background: #475569;
-      border-radius: 50%;
-      transition: all 0.25s;
-    }
-    .client-toggle input:checked + .client-toggle-slider {
-      background: linear-gradient(135deg, #7c3aed, #a78bfa);
-      border-color: #7c3aed;
-    }
-    .client-toggle input:checked + .client-toggle-slider::before {
-      left: 26px;
-      background: #fff;
-    }
-    .client-goal-text { flex: 1; }
-    .client-goal-title {
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #cbd5e1;
-    }
-    .client-goal-sub {
-      font-size: 0.78rem;
-      color: #475569;
-      margin-top: 3px;
-    }
-    .client-signed {
-      color: #a78bfa;
-      font-weight: 700;
-      font-size: 1.05rem;
-    }
-    .client-celebration {
-      margin-top: 14px;
-      text-align: center;
-      font-size: 0.95rem;
-      font-weight: 600;
-      color: #a78bfa;
-      background: rgba(124,58,237,0.1);
-      border: 1px solid rgba(124,58,237,0.25);
-      border-radius: 10px;
-      padding: 12px;
-      display: none;
-    }
-    .client-celebration.show { display: block; }
-
-    /* OUTREACH STATS */
-    .stats-toggle-row {
-      display: flex;
-      gap: 6px;
-      margin-bottom: 16px;
-    }
-    .toggle-pill {
-      flex: 1;
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      color: #475569;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 7px 0;
-      cursor: pointer;
-      transition: all 0.15s;
-      text-align: center;
-    }
-    .toggle-pill.active {
-      background: rgba(124,58,237,0.2);
-      border-color: rgba(124,58,237,0.4);
-      color: #a78bfa;
-    }
-
-    .outreach-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
-    .outreach-box {
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 12px;
-      padding: 14px 10px;
-      text-align: center;
-    }
-    .outreach-val {
-      font-size: 1.6rem;
-      font-weight: 700;
-      color: #a78bfa;
-      line-height: 1;
-      margin-bottom: 5px;
-    }
-    .outreach-val.rate { font-size: 1.3rem; }
-    .outreach-label { font-size: 0.68rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-
-    .outreach-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .outreach-input-wrap { display: flex; flex-direction: column; gap: 4px; }
-    .outreach-input-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-    .outreach-input {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      color: #e2e8f0;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 8px 10px;
-      outline: none;
-      width: 100%;
-      transition: border-color 0.15s;
-      text-align: center;
-    }
-    .outreach-input:focus { border-color: rgba(124,58,237,0.5); }
-
-    /* SALES PIPELINE */
-    .pipeline { display: flex; flex-direction: column; gap: 8px; }
-    .pipeline-stage {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 11px 14px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 10px;
-    }
-    .pipeline-dot {
-      width: 8px;
-      height: 8px;
-      border-radius: 50%;
-      background: #7c3aed;
-      flex-shrink: 0;
-      opacity: 0.5;
-    }
-    .pipeline-stage.has-count .pipeline-dot { opacity: 1; }
-    .pipeline-name {
-      flex: 1;
-      font-size: 0.88rem;
-      font-weight: 500;
-      color: #94a3b8;
-    }
-    .pipeline-stage.has-count .pipeline-name { color: #cbd5e1; }
-    .pipeline-count-input {
-      width: 54px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 7px;
-      color: #a78bfa;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 700;
-      padding: 5px 0;
-      outline: none;
-      text-align: center;
-      transition: border-color 0.15s;
-    }
-    .pipeline-count-input:focus { border-color: rgba(124,58,237,0.5); }
-    .pipeline-arrow {
-      font-size: 0.65rem;
-      color: #334155;
-      text-align: center;
-      padding: 0 14px;
-      letter-spacing: 0.05em;
-    }
-
-    /* FOLLOW-UPS DUE */
-    .followup-row {
-      display: flex;
-      align-items: center;
-      gap: 14px;
-    }
-    .followup-count-display {
-      font-size: 3rem;
-      font-weight: 700;
-      color: #a78bfa;
-      line-height: 1;
-      min-width: 64px;
-    }
-    .followup-count-display.zero { color: #334155; }
-    .followup-right { flex: 1; }
-    .followup-label { font-size: 0.88rem; color: #cbd5e1; font-weight: 500; margin-bottom: 10px; }
-    .followup-sub { font-size: 0.75rem; color: #475569; margin-top: 3px; }
-    .followup-btns { display: flex; gap: 8px; }
-    .fu-btn {
-      background: rgba(124,58,237,0.15);
-      border: 1px solid rgba(124,58,237,0.25);
-      border-radius: 8px;
-      color: #a78bfa;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 7px 14px;
-      cursor: pointer;
-      transition: all 0.15s;
-    }
-    .fu-btn:hover { background: rgba(124,58,237,0.25); }
-    .fu-btn.primary {
-      background: #7c3aed;
-      border-color: #7c3aed;
-      color: #fff;
-    }
-    .fu-btn.primary:hover { background: #6d28d9; }
 
     /* STATS */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -387,160 +187,246 @@
       padding: 16px;
       text-align: center;
     }
-    .stat-value {
-      font-size: 2rem;
-      font-weight: 700;
-      color: #a78bfa;
-      line-height: 1;
-      margin-bottom: 6px;
-    }
+    .stat-value { font-size: 2rem; font-weight: 700; color: #a78bfa; line-height: 1; margin-bottom: 6px; }
     .stat-label { font-size: 0.75rem; color: #475569; font-weight: 500; }
 
-    /* NOTIFICATION BUTTONS */
-    .notif-btn {
+    /* PAGE 2 HEADER */
+    .p2-header { padding: 4px 0 2px; }
+    .p2-header h1 {
+      font-size: 1.9rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+    .p2-header .sub { color: #64748b; font-size: 0.85rem; margin-top: 4px; }
+
+    /* OUTREACH STATS */
+    .stats-toggle-row { display: flex; gap: 6px; margin-bottom: 14px; }
+    .toggle-pill {
       flex: 1;
-      background: #7c3aed;
-      border: none;
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #475569;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 8px 0;
+      cursor: pointer;
+      text-align: center;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .toggle-pill.active { background: rgba(124,58,237,0.2); border-color: rgba(124,58,237,0.4); color: #a78bfa; }
+
+    .outreach-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .outreach-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
       border-radius: 12px;
-      color: #fff;
+      padding: 14px 8px;
+      text-align: center;
+    }
+    .outreach-val { font-size: 1.6rem; font-weight: 700; color: #a78bfa; line-height: 1; margin-bottom: 5px; }
+    .outreach-val.rate { font-size: 1.3rem; }
+    .outreach-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .outreach-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .outreach-input-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .outreach-input-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .outreach-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #e2e8f0;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 0.9rem;
       font-weight: 600;
-      padding: 14px 18px;
-      cursor: pointer;
-      transition: background 0.15s, opacity 0.15s;
+      padding: 10px 8px;
+      outline: none;
+      width: 100%;
+      text-align: center;
     }
-    .notif-btn:hover { background: #6d28d9; }
-    .notif-btn:disabled { opacity: 0.4; cursor: default; background: #7c3aed; }
-    .notif-btn-secondary {
-      flex: 0 0 auto;
-      background: rgba(124,58,237,0.15);
-      border: 1px solid rgba(124,58,237,0.3);
+    .outreach-input:focus { border-color: rgba(124,58,237,0.5); }
+
+    /* PIPELINE */
+    .pipeline { display: flex; flex-direction: column; gap: 8px; }
+    .pipeline-stage {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 12px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+    }
+    .pipeline-dot {
+      width: 8px; height: 8px;
+      border-radius: 50%;
+      background: #7c3aed;
+      flex-shrink: 0;
+      opacity: 0.35;
+      transition: opacity 0.15s;
+    }
+    .pipeline-stage.has-count .pipeline-dot { opacity: 1; }
+    .pipeline-name { flex: 1; font-size: 0.88rem; font-weight: 500; color: #64748b; }
+    .pipeline-stage.has-count .pipeline-name { color: #cbd5e1; }
+    .pipeline-count-input {
+      width: 54px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 7px;
       color: #a78bfa;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.9rem;
+      font-weight: 700;
+      padding: 6px 0;
+      outline: none;
+      text-align: center;
     }
-    .notif-btn-secondary:hover { background: rgba(124,58,237,0.25); }
+    .pipeline-count-input:focus { border-color: rgba(124,58,237,0.5); }
+    .pipeline-arrow { font-size: 0.65rem; color: #1e293b; text-align: center; padding: 0 14px; }
+
+    /* FOLLOW-UPS */
+    .followup-row { display: flex; align-items: center; gap: 14px; }
+    .followup-count-display {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #a78bfa;
+      line-height: 1;
+      min-width: 64px;
+    }
+    .followup-count-display.zero { color: #1e293b; }
+    .followup-right { flex: 1; }
+    .followup-label { font-size: 0.88rem; color: #cbd5e1; font-weight: 500; }
+    .followup-sub { font-size: 0.75rem; color: #475569; margin-top: 3px; }
+    .followup-btns { display: flex; gap: 8px; margin-top: 10px; }
+    .fu-btn {
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 8px;
+      color: #a78bfa;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.82rem;
+      font-weight: 600;
+      padding: 8px 14px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .fu-btn.primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
   </style>
 </head>
 <body>
-  <div class="container">
 
-    <!-- HEADER -->
-    <div class="header">
-      <h1>Hey Alex 👋</h1>
-      <div class="date" id="date-display"></div>
-    </div>
+  <!-- DOTS -->
+  <div class="dots">
+    <div class="dot active" id="dot-0"></div>
+    <div class="dot" id="dot-1"></div>
+  </div>
 
-    <!-- BANNER -->
-    <div class="banner" id="banner"></div>
+  <!-- SLIDER -->
+  <div class="slider" id="slider">
 
-    <!-- TASKS CARD -->
-    <div class="card">
-      <div class="card-label">Today's Tasks</div>
-      <div class="task-list" id="task-list"></div>
-      <div class="task-footer">
-        <button class="reset-btn" id="reset-btn">Reset today</button>
+    <!-- PAGE 1: TASKS + STATS -->
+    <div class="slide" id="slide-0">
+
+      <div class="header">
+        <h1>Hey Alex 👋</h1>
+        <div class="date" id="date-display"></div>
       </div>
-    </div>
 
-    <!-- FIRST CLIENT GOAL -->
-    <div class="card">
-      <div class="card-label">First Client Goal</div>
-      <div class="client-goal-row">
-        <label class="client-toggle">
-          <input type="checkbox" id="client-toggle-input" />
-          <span class="client-toggle-slider"></span>
-        </label>
-        <div class="client-goal-text">
-          <div class="client-goal-title" id="client-goal-title">Not signed yet</div>
-          <div class="client-goal-sub" id="client-goal-sub">Toggle when you land your first client 🎯</div>
-        </div>
-        <div style="font-size:1.5rem;" id="client-emoji">0<span style="color:#334155;font-size:1rem;">/1</span></div>
-      </div>
-      <div class="client-celebration" id="client-celebration">
-        🎉 First client signed! ChatAero is live. Let's get the next one.
-      </div>
-    </div>
+      <div class="banner" id="banner"></div>
 
-    <!-- OUTREACH STATS -->
-    <div class="card">
-      <div class="card-label">Outreach Stats</div>
-      <div class="stats-toggle-row">
-        <button class="toggle-pill active" id="pill-alltime" onclick="setStatView('alltime')">All Time</button>
-        <button class="toggle-pill" id="pill-weekly" onclick="setStatView('weekly')">This Week</button>
-      </div>
-      <div class="outreach-grid">
-        <div class="outreach-box">
-          <div class="outreach-val" id="stat-sent">0</div>
-          <div class="outreach-label">Emails Sent</div>
-        </div>
-        <div class="outreach-box">
-          <div class="outreach-val rate" id="stat-rate">0%</div>
-          <div class="outreach-label">Open Rate</div>
-        </div>
-        <div class="outreach-box">
-          <div class="outreach-val" id="stat-replies">0</div>
-          <div class="outreach-label">Replies</div>
+      <div class="card">
+        <div class="card-label">Today's Tasks</div>
+        <div class="task-list" id="task-list"></div>
+        <div class="task-footer">
+          <button class="reset-btn" id="reset-btn">Reset today</button>
         </div>
       </div>
-      <div class="outreach-inputs" id="outreach-inputs">
-        <div class="outreach-input-wrap">
-          <div class="outreach-input-label">Sent</div>
-          <input class="outreach-input" type="number" min="0" id="input-sent" placeholder="0" />
-        </div>
-        <div class="outreach-input-wrap">
-          <div class="outreach-input-label">Opened</div>
-          <input class="outreach-input" type="number" min="0" id="input-opened" placeholder="0" />
-        </div>
-        <div class="outreach-input-wrap">
-          <div class="outreach-input-label">Replies</div>
-          <input class="outreach-input" type="number" min="0" id="input-replies" placeholder="0" />
-        </div>
-      </div>
-    </div>
 
-    <!-- SALES PIPELINE -->
-    <div class="card">
-      <div class="card-label">Sales Pipeline</div>
-      <div class="pipeline" id="pipeline-list"></div>
-    </div>
-
-    <!-- FOLLOW-UPS DUE -->
-    <div class="card">
-      <div class="card-label">Follow-ups Due Today</div>
-      <div class="followup-row">
-        <div class="followup-count-display" id="fu-count">0</div>
-        <div class="followup-right">
-          <div class="followup-label" id="fu-label">No follow-ups due</div>
-          <div class="followup-sub" id="fu-sub">Set how many are due, mark off as you send</div>
-          <div class="followup-btns" style="margin-top:10px;">
-            <button class="fu-btn" onclick="adjustFollowups(-1)">− Sent one</button>
-            <button class="fu-btn primary" onclick="setFollowupModal()">Set</button>
+      <div class="card">
+        <div class="card-label">Stats</div>
+        <div class="stats-grid">
+          <div class="stat-box">
+            <div class="stat-value" id="streak-val">0 🔥</div>
+            <div class="stat-label">Day streak</div>
+          </div>
+          <div class="stat-box">
+            <div class="stat-value" id="total-val">0</div>
+            <div class="stat-label">Total days done</div>
           </div>
         </div>
       </div>
+
     </div>
 
-    <!-- STATS CARD -->
-    <div class="card">
-      <div class="card-label">Stats</div>
-      <div class="stats-grid">
-        <div class="stat-box">
-          <div class="stat-value" id="streak-val">0 🔥</div>
-          <div class="stat-label">Day streak</div>
+    <!-- PAGE 2: OUTREACH + PIPELINE + FOLLOWUPS -->
+    <div class="slide" id="slide-1">
+
+      <div class="p2-header">
+        <h1>Outreach 📈</h1>
+        <div class="sub" id="date-display-2"></div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">Email Stats</div>
+        <div class="stats-toggle-row">
+          <button class="toggle-pill active" id="pill-alltime" onclick="setStatView('alltime')">All Time</button>
+          <button class="toggle-pill" id="pill-weekly" onclick="setStatView('weekly')">This Week</button>
         </div>
-        <div class="stat-box">
-          <div class="stat-value" id="total-val">0</div>
-          <div class="stat-label">Total days done</div>
+        <div class="outreach-grid">
+          <div class="outreach-box">
+            <div class="outreach-val" id="stat-sent">0</div>
+            <div class="outreach-label">Sent</div>
+          </div>
+          <div class="outreach-box">
+            <div class="outreach-val rate" id="stat-rate">0%</div>
+            <div class="outreach-label">Open Rate</div>
+          </div>
+          <div class="outreach-box">
+            <div class="outreach-val" id="stat-replies">0</div>
+            <div class="outreach-label">Replies</div>
+          </div>
+        </div>
+        <div class="outreach-inputs">
+          <div class="outreach-input-wrap">
+            <div class="outreach-input-label">Sent</div>
+            <input class="outreach-input" type="number" min="0" id="input-sent" placeholder="0" inputmode="numeric" />
+          </div>
+          <div class="outreach-input-wrap">
+            <div class="outreach-input-label">Opened</div>
+            <input class="outreach-input" type="number" min="0" id="input-opened" placeholder="0" inputmode="numeric" />
+          </div>
+          <div class="outreach-input-wrap">
+            <div class="outreach-input-label">Replies</div>
+            <input class="outreach-input" type="number" min="0" id="input-replies" placeholder="0" inputmode="numeric" />
+          </div>
         </div>
       </div>
-    </div>
 
-    <!-- NOTIFICATION BUTTONS -->
-    <div id="notif-section" style="display:flex; gap:10px;">
-      <button class="notif-btn" id="enable-notif-btn">🔔 Enable Notifications</button>
-      <button class="notif-btn notif-btn-secondary" id="test-notif-btn">Test</button>
-    </div>
+      <div class="card">
+        <div class="card-label">Sales Pipeline</div>
+        <div class="pipeline" id="pipeline-list"></div>
+      </div>
 
+      <div class="card">
+        <div class="card-label">Follow-ups Due Today</div>
+        <div class="followup-row">
+          <div class="followup-count-display zero" id="fu-count">0</div>
+          <div class="followup-right">
+            <div class="followup-label" id="fu-label">No follow-ups due</div>
+            <div class="followup-sub" id="fu-sub">Tap Set to add today's count</div>
+            <div class="followup-btns">
+              <button class="fu-btn" onclick="adjustFollowups(-1)">− Sent one</button>
+              <button class="fu-btn primary" onclick="setFollowups()">Set</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
   </div>
 
   <script>
@@ -549,38 +435,34 @@
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
-
     function weekKey() {
       const d = new Date();
-      const day = d.getDay(); // 0=Sun
+      const day = d.getDay();
       const monday = new Date(d);
       monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
       return `week-${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
     }
-
     function getDay() { return new Date().getDay(); }
-
     function formatDate(d) {
-      return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
+      return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' });
     }
-
     function load(key, fallback) {
       try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; }
       catch { return fallback; }
     }
     function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
-    // ── TASKS DEFINITION ─────────────────────────────────────────────────
+    // ── TASKS ─────────────────────────────────────────────────────────────
     function getTasksForToday() {
       const day = getDay();
       const tasks = [
-        { id: 'linkedin',  label: 'LinkedIn connections sent',                  badge: '20+' },
-        { id: 'upwork',    label: 'Upwork proposal sent',                        badge: '1+' },
-        { id: 'ai',        label: '30 mins AI learning done',                    badge: '30 min' },
+        { id: 'linkedin',  label: 'LinkedIn connections sent', badge: '20+' },
+        { id: 'upwork',    label: 'Upwork proposal sent',       badge: '1+' },
+        { id: 'ai',        label: '30 mins AI learning done',   badge: '30 min' },
       ];
       if (day === 0 || day === 4) {
         tasks.push({ id: 'followup', label: 'Schedule 30 follow up emails (send tomorrow)', badge: '30' });
-      } else if (day === 1 || day === 2 || day === 3) {
+      } else if (day >= 1 && day <= 3) {
         tasks.push({ id: 'coldemail', label: 'Schedule 30 cold emails (send tomorrow)', badge: '30' });
       }
       if (day === 5) {
@@ -590,42 +472,32 @@
     }
 
     // ── STATE ─────────────────────────────────────────────────────────────
-    let completions = load('completions_' + todayKey(), {});
-    let streak      = load('streak', 0);
-    let totalDays   = load('total_days', 0);
-    let lastDone    = load('last_done_date', null);
-
-    // Client goal
-    let clientSigned = load('client_signed', false);
-
-    // Outreach stats
-    let statView = 'alltime';
+    let completions  = load('completions_' + todayKey(), {});
+    let streak       = load('streak', 0);
+    let totalDays    = load('total_days', 0);
+    let lastDone     = load('last_done_date', null);
+    let statView     = 'alltime';
     let statsAllTime = load('stats_alltime', { sent: 0, opened: 0, replies: 0 });
     let statsWeekly  = load('stats_' + weekKey(), { sent: 0, opened: 0, replies: 0 });
-
-    // Pipeline
-    const PIPELINE_STAGES = ['Contacted', 'Opened', 'Replied', 'Demo Booked', 'Closed'];
     let pipelineCounts = load('pipeline_counts', { Contacted:0, Opened:0, Replied:0, 'Demo Booked':0, Closed:0 });
-
-    // Follow-ups
     let followupDue  = load('followup_due_' + todayKey(), 0);
-
+    const PIPELINE_STAGES = ['Contacted', 'Opened', 'Replied', 'Demo Booked', 'Closed'];
     const tasks = getTasksForToday();
 
     // ── STREAK CHECK ──────────────────────────────────────────────────────
-    (function checkStreak() {
+    (function() {
       if (!lastDone) return;
       const today = todayKey();
       if (lastDone === today) return;
-      const last = new Date(lastDone);
-      const now  = new Date(today);
-      const diff = Math.round((now - last) / 86400000);
+      const diff = Math.round((new Date(today) - new Date(lastDone)) / 86400000);
       if (diff > 1) { streak = 0; save('streak', 0); }
     })();
 
     // ── RENDER ────────────────────────────────────────────────────────────
     function render() {
-      document.getElementById('date-display').textContent = formatDate(new Date());
+      const dateStr = formatDate(new Date());
+      document.getElementById('date-display').textContent = dateStr;
+      document.getElementById('date-display-2').textContent = dateStr;
 
       // Tasks
       const list = document.getElementById('task-list');
@@ -641,45 +513,27 @@
             </svg>
           </div>
           <span class="task-label">${task.label}</span>
-          <span class="task-badge">${task.badge}</span>
-        `;
+          <span class="task-badge">${task.badge}</span>`;
         item.addEventListener('click', () => toggleTask(task.id));
         list.appendChild(item);
       });
 
       // Banner
       const remaining = tasks.filter(t => !completions[t.id]).length;
-      const banner = document.getElementById('banner');
-      banner.textContent = remaining === 0
+      document.getElementById('banner').textContent = remaining === 0
         ? '🎯 All done for today! Smashing it Alex.'
         : `${remaining} task${remaining > 1 ? 's' : ''} left today — keep going!`;
 
-      // First client
-      const toggle = document.getElementById('client-toggle-input');
-      toggle.checked = clientSigned;
-      document.getElementById('client-goal-title').textContent = clientSigned ? 'First client signed! 🎉' : 'Not signed yet';
-      document.getElementById('client-goal-sub').textContent = clientSigned
-        ? 'ChatAero is live — now get client #2'
-        : 'Toggle when you land your first client 🎯';
-      document.getElementById('client-emoji').innerHTML = clientSigned
-        ? '<span class="client-signed">1/1</span>'
-        : '0<span style="color:#334155;font-size:1rem;">/1</span>';
-      const celeb = document.getElementById('client-celebration');
-      clientSigned ? celeb.classList.add('show') : celeb.classList.remove('show');
+      // Streak
+      document.getElementById('streak-val').textContent = streak + ' 🔥';
+      document.getElementById('total-val').textContent = totalDays;
 
       // Outreach stats
-      const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
-      document.getElementById('stat-sent').textContent = stats.sent;
-      const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
-      document.getElementById('stat-rate').textContent = rate + '%';
-      document.getElementById('stat-replies').textContent = stats.replies;
-      document.getElementById('input-sent').value    = stats.sent    || '';
-      document.getElementById('input-opened').value  = stats.opened  || '';
-      document.getElementById('input-replies').value = stats.replies || '';
+      renderStats();
 
       // Pipeline
-      const pipelineList = document.getElementById('pipeline-list');
-      pipelineList.innerHTML = '';
+      const pipelineEl = document.getElementById('pipeline-list');
+      pipelineEl.innerHTML = '';
       PIPELINE_STAGES.forEach((stage, i) => {
         const count = pipelineCounts[stage] || 0;
         const row = document.createElement('div');
@@ -687,26 +541,23 @@
         row.innerHTML = `
           <div class="pipeline-dot"></div>
           <span class="pipeline-name">${stage}</span>
-          <input class="pipeline-count-input" type="number" min="0" value="${count}" data-stage="${stage}" />
-        `;
-        pipelineList.appendChild(row);
+          <input class="pipeline-count-input" type="number" min="0" inputmode="numeric" value="${count}" data-stage="${stage}" />`;
+        pipelineEl.appendChild(row);
         if (i < PIPELINE_STAGES.length - 1) {
           const arrow = document.createElement('div');
           arrow.className = 'pipeline-arrow';
           arrow.textContent = '↓';
-          pipelineList.appendChild(arrow);
+          pipelineEl.appendChild(arrow);
         }
       });
-
-      // Bind pipeline inputs
       document.querySelectorAll('.pipeline-count-input').forEach(inp => {
         inp.addEventListener('input', () => {
           const stage = inp.dataset.stage;
-          const val = parseInt(inp.value) || 0;
-          pipelineCounts[stage] = val;
+          pipelineCounts[stage] = parseInt(inp.value) || 0;
           save('pipeline_counts', pipelineCounts);
-          inp.closest('.pipeline-stage').className = 'pipeline-stage' + (val > 0 ? ' has-count' : '');
-          inp.closest('.pipeline-stage').querySelector('.pipeline-dot').style.opacity = val > 0 ? '1' : '0.5';
+          const row = inp.closest('.pipeline-stage');
+          const hasCount = pipelineCounts[stage] > 0;
+          row.className = 'pipeline-stage' + (hasCount ? ' has-count' : '');
         });
       });
 
@@ -715,18 +566,25 @@
       fuEl.textContent = followupDue;
       fuEl.className = 'followup-count-display' + (followupDue === 0 ? ' zero' : '');
       document.getElementById('fu-label').textContent = followupDue === 0
-        ? 'No follow-ups due'
-        : `${followupDue} follow-up${followupDue > 1 ? 's' : ''} to send today`;
+        ? 'No follow-ups due' : `${followupDue} follow-up${followupDue > 1 ? 's' : ''} to send`;
       document.getElementById('fu-sub').textContent = followupDue === 0
-        ? 'Set how many are due, mark off as you send'
-        : 'Hit "Sent one" each time you send a follow-up';
-
-      // Streak / total
-      document.getElementById('streak-val').textContent = streak + ' 🔥';
-      document.getElementById('total-val').textContent = totalDays;
+        ? 'Tap Set to add today\'s count' : 'Tap "Sent one" each time you send';
     }
 
-    // ── TASKS ─────────────────────────────────────────────────────────────
+    function renderStats() {
+      const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
+      document.getElementById('stat-sent').textContent = stats.sent;
+      const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
+      document.getElementById('stat-rate').textContent = rate + '%';
+      document.getElementById('stat-replies').textContent = stats.replies;
+      document.getElementById('input-sent').value    = stats.sent    || '';
+      document.getElementById('input-opened').value  = stats.opened  || '';
+      document.getElementById('input-replies').value = stats.replies || '';
+      document.getElementById('pill-alltime').classList.toggle('active', statView === 'alltime');
+      document.getElementById('pill-weekly').classList.toggle('active', statView === 'weekly');
+    }
+
+    // ── TASKS LOGIC ───────────────────────────────────────────────────────
     function toggleTask(id) {
       completions[id] = !completions[id];
       save('completions_' + todayKey(), completions);
@@ -740,9 +598,9 @@
       if (allDone && lastDone !== today) {
         lastDone = today;
         save('last_done_date', today);
-        streak += 1;
+        streak++;
         save('streak', streak);
-        totalDays += 1;
+        totalDays++;
         save('total_days', totalDays);
         fetch('/api/tasks-complete', {
           method: 'POST',
@@ -767,161 +625,108 @@
       render();
     });
 
-    // ── FIRST CLIENT GOAL ────────────────────────────────────────────────
-    document.getElementById('client-toggle-input').addEventListener('change', e => {
-      clientSigned = e.target.checked;
-      save('client_signed', clientSigned);
-      render();
-    });
-
-    // ── OUTREACH STATS ────────────────────────────────────────────────────
+    // ── OUTREACH ──────────────────────────────────────────────────────────
     function setStatView(view) {
       statView = view;
-      document.getElementById('pill-alltime').classList.toggle('active', view === 'alltime');
-      document.getElementById('pill-weekly').classList.toggle('active', view === 'weekly');
-      render();
+      renderStats();
     }
 
-    function bindOutreachInputs() {
-      ['sent', 'opened', 'replies'].forEach(field => {
-        document.getElementById('input-' + field).addEventListener('input', e => {
-          const val = parseInt(e.target.value) || 0;
-          if (statView === 'alltime') {
-            statsAllTime[field] = val;
-            save('stats_alltime', statsAllTime);
-          } else {
-            statsWeekly[field] = val;
-            save('stats_' + weekKey(), statsWeekly);
-          }
-          // Update display without full re-render to avoid cursor jump
-          const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
-          document.getElementById('stat-sent').textContent = stats.sent;
-          const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
-          document.getElementById('stat-rate').textContent = rate + '%';
-          document.getElementById('stat-replies').textContent = stats.replies;
-        });
+    ['sent', 'opened', 'replies'].forEach(field => {
+      document.getElementById('input-' + field).addEventListener('input', e => {
+        const val = parseInt(e.target.value) || 0;
+        if (statView === 'alltime') { statsAllTime[field] = val; save('stats_alltime', statsAllTime); }
+        else { statsWeekly[field] = val; save('stats_' + weekKey(), statsWeekly); }
+        const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
+        document.getElementById('stat-sent').textContent = stats.sent;
+        document.getElementById('stat-rate').textContent = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) + '%' : '0%';
+        document.getElementById('stat-replies').textContent = stats.replies;
       });
-    }
+    });
 
     // ── FOLLOW-UPS ────────────────────────────────────────────────────────
     function adjustFollowups(delta) {
       followupDue = Math.max(followupDue + delta, 0);
       save('followup_due_' + todayKey(), followupDue);
-      render();
+      const fuEl = document.getElementById('fu-count');
+      fuEl.textContent = followupDue;
+      fuEl.className = 'followup-count-display' + (followupDue === 0 ? ' zero' : '');
+      document.getElementById('fu-label').textContent = followupDue === 0
+        ? 'No follow-ups due' : `${followupDue} follow-up${followupDue > 1 ? 's' : ''} to send`;
+      document.getElementById('fu-sub').textContent = followupDue === 0
+        ? 'Tap Set to add today\'s count' : 'Tap "Sent one" each time you send';
     }
 
-    function setFollowupModal() {
-      const val = prompt('How many follow-ups are due today?', followupDue);
-      if (val !== null) {
-        const num = Math.max(parseInt(val) || 0, 0);
-        followupDue = num;
-        save('followup_due_' + todayKey(), followupDue);
-        render();
-      }
+    function setFollowups() {
+      const val = prompt('How many follow-ups due today?', followupDue);
+      if (val !== null) { followupDue = Math.max(parseInt(val) || 0, 0); save('followup_due_' + todayKey(), followupDue); adjustFollowups(0); }
     }
+
+    // ── SWIPE / SLIDE ─────────────────────────────────────────────────────
+    let currentPage = 0;
+    const slider = document.getElementById('slider');
+
+    function goTo(page) {
+      currentPage = page;
+      slider.style.transform = `translateX(-${page * 100}vw)`;
+      document.getElementById('dot-0').className = 'dot' + (page === 0 ? ' active' : '');
+      document.getElementById('dot-1').className = 'dot' + (page === 1 ? ' active' : '');
+    }
+
+    // Touch swipe
+    let touchStartX = 0;
+    let touchStartY = 0;
+    let swiping = false;
+
+    slider.addEventListener('touchstart', e => {
+      touchStartX = e.touches[0].clientX;
+      touchStartY = e.touches[0].clientY;
+      swiping = false;
+    }, { passive: true });
+
+    slider.addEventListener('touchmove', e => {
+      const dx = e.touches[0].clientX - touchStartX;
+      const dy = e.touches[0].clientY - touchStartY;
+      if (!swiping && Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 8) {
+        swiping = true;
+      }
+      if (swiping) e.preventDefault();
+    }, { passive: false });
+
+    slider.addEventListener('touchend', e => {
+      const dx = e.changedTouches[0].clientX - touchStartX;
+      const dy = e.changedTouches[0].clientY - touchStartY;
+      if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
+        if (dx < 0 && currentPage === 0) goTo(1);
+        else if (dx > 0 && currentPage === 1) goTo(0);
+      }
+    }, { passive: true });
+
+    // Dot clicks
+    document.getElementById('dot-0').addEventListener('click', () => goTo(0));
+    document.getElementById('dot-1').addEventListener('click', () => goTo(1));
 
     // ── INIT ─────────────────────────────────────────────────────────────
     render();
-    bindOutreachInputs();
 
-    // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────
-    const enableBtn = document.getElementById('enable-notif-btn');
-    const testBtn   = document.getElementById('test-notif-btn');
-
-    function urlBase64ToUint8Array(base64String) {
-      const padding = '='.repeat((4 - (base64String.length % 4)) % 4);
-      const base64 = (base64String + padding).replace(/-/g, '+').replace(/_/g, '/');
-      const raw = atob(base64);
-      return Uint8Array.from([...raw].map(c => c.charCodeAt(0)));
+    // ── PUSH NOTIFICATIONS (keep subscription alive silently) ─────────────
+    function urlBase64ToUint8Array(b) {
+      const pad = '='.repeat((4 - b.length % 4) % 4);
+      const base64 = (b + pad).replace(/-/g, '+').replace(/_/g, '/');
+      return Uint8Array.from([...atob(base64)].map(c => c.charCodeAt(0)));
     }
-
-    function updateEnableBtn() {
-      if (!('Notification' in window)) {
-        enableBtn.textContent = '🔕 Not supported';
-        enableBtn.disabled = true;
-        return;
-      }
-      if (Notification.permission === 'granted') {
-        enableBtn.textContent = '✅ Notifications enabled';
-        enableBtn.disabled = true;
-      } else if (Notification.permission === 'denied') {
-        enableBtn.textContent = '🚫 Notifications blocked — allow in browser settings';
-        enableBtn.disabled = true;
-      } else {
-        enableBtn.textContent = '🔔 Enable Notifications';
-        enableBtn.disabled = false;
-      }
-    }
-
-    let swReg = null;
-
-    async function registerSW() {
-      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return null;
+    (async () => {
+      if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
       try {
         const reg = await navigator.serviceWorker.register('/sw.js');
         await navigator.serviceWorker.ready;
-        swReg = reg;
-        return reg;
-      } catch (err) {
-        console.warn('SW registration failed:', err);
-        return null;
-      }
-    }
-
-    async function subscribeAndSave(reg) {
-      try {
-        const res = await fetch('/api/vapid-public-key');
-        const { publicKey } = await res.json();
-        let sub = await reg.pushManager.getSubscription();
-        if (!sub) {
-          sub = await reg.pushManager.subscribe({
-            userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(publicKey),
-          });
+        if (Notification.permission === 'granted') {
+          const res = await fetch('/api/vapid-public-key');
+          const { publicKey } = await res.json();
+          let sub = await reg.pushManager.getSubscription();
+          if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+          await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
         }
-        await fetch('/api/subscribe', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify(sub),
-        });
-        return true;
-      } catch (err) {
-        console.warn('Subscribe failed:', err);
-        return false;
-      }
-    }
-
-    enableBtn.addEventListener('click', async () => {
-      enableBtn.disabled = true;
-      enableBtn.textContent = 'Setting up...';
-      const reg = swReg || await registerSW();
-      if (!reg) { updateEnableBtn(); return; }
-      const permission = await Notification.requestPermission();
-      if (permission === 'granted') {
-        await subscribeAndSave(reg);
-      }
-      updateEnableBtn();
-    });
-
-    testBtn.addEventListener('click', async () => {
-      testBtn.textContent = 'Sending...';
-      testBtn.disabled = true;
-      try {
-        await fetch('/api/test-notification', { method: 'POST' });
-        testBtn.textContent = 'Sent ✓';
-      } catch {
-        testBtn.textContent = 'Failed';
-      }
-      setTimeout(() => { testBtn.textContent = 'Test'; testBtn.disabled = false; }, 2000);
-    });
-
-    (async () => {
-      updateEnableBtn();
-      const reg = await registerSW();
-      if (reg && Notification.permission === 'granted') {
-        await subscribeAndSave(reg);
-        updateEnableBtn();
-      }
+      } catch {}
     })();
   </script>
 </body>
