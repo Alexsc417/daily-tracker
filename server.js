@@ -37,6 +37,13 @@ webpush.setVapidDetails(
 let pushSubscription = null;
 let tasksDoneDate = null; // 'YYYY-MM-DD' when all tasks completed
 
+// Outreach stats — updated by sync script, served to app on load
+let outreachStats = {
+  alltime: { sent: 0, opened: 0, replies: 0 },
+  weekly:  { sent: 0, opened: 0, replies: 0 },
+  syncedAt: null,
+};
+
 // ── HELPERS ───────────────────────────────────────────────────────────
 function getTodayUK() {
   const d = new Date();
@@ -87,6 +94,20 @@ app.post('/api/tasks-complete', (req, res) => {
 
 app.post('/api/tasks-reset', (req, res) => {
   tasksDoneDate = null;
+  res.json({ ok: true });
+});
+
+// ── OUTREACH STATS API ────────────────────────────────────────────────
+app.get('/api/stats', (req, res) => {
+  res.json(outreachStats);
+});
+
+app.post('/api/stats', (req, res) => {
+  const { alltime, weekly } = req.body;
+  if (alltime) outreachStats.alltime = alltime;
+  if (weekly)  outreachStats.weekly  = weekly;
+  outreachStats.syncedAt = new Date().toISOString();
+  console.log('Stats updated:', outreachStats);
   res.json({ ok: true });
 });
 

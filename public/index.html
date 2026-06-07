@@ -404,11 +404,7 @@
             <input class="outreach-input" type="number" min="0" id="input-replies" placeholder="0" inputmode="numeric" />
           </div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-label">Sales Pipeline</div>
-        <div class="pipeline" id="pipeline-list"></div>
+        <div id="synced-at" style="font-size:0.68rem;color:#334155;margin-top:10px;text-align:right;"></div>
       </div>
 
       <div class="card">
@@ -643,6 +639,23 @@
       });
     });
 
+    // Fetch stats from server on load and override localStorage
+    async function fetchServerStats() {
+      try {
+        const res = await fetch('/api/stats');
+        const data = await res.json();
+        if (data.alltime) { statsAllTime = data.alltime; save('stats_alltime', statsAllTime); }
+        if (data.weekly)  { statsWeekly  = data.weekly;  save('stats_' + weekKey(), statsWeekly); }
+        if (data.syncedAt) {
+          const d = new Date(data.syncedAt);
+          const label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
+          const el = document.getElementById('synced-at');
+          if (el) el.textContent = 'Synced ' + label;
+        }
+        renderStats();
+      } catch {}
+    }
+
     // ── FOLLOW-UPS ────────────────────────────────────────────────────────
     function adjustFollowups(delta) {
       followupDue = Math.max(followupDue + delta, 0);
@@ -707,6 +720,7 @@
 
     // ── INIT ─────────────────────────────────────────────────────────────
     render();
+    fetchServerStats();
 
     // ── PUSH NOTIFICATIONS (keep subscription alive silently) ─────────────
     function urlBase64ToUint8Array(b) {
