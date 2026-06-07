@@ -250,44 +250,6 @@
     }
     .outreach-input:focus { border-color: rgba(124,58,237,0.5); }
 
-    /* PIPELINE */
-    .pipeline { display: flex; flex-direction: column; gap: 8px; }
-    .pipeline-stage {
-      display: flex;
-      align-items: center;
-      gap: 12px;
-      padding: 12px 14px;
-      background: rgba(255,255,255,0.03);
-      border: 1px solid rgba(255,255,255,0.05);
-      border-radius: 10px;
-    }
-    .pipeline-dot {
-      width: 8px; height: 8px;
-      border-radius: 50%;
-      background: #7c3aed;
-      flex-shrink: 0;
-      opacity: 0.35;
-      transition: opacity 0.15s;
-    }
-    .pipeline-stage.has-count .pipeline-dot { opacity: 1; }
-    .pipeline-name { flex: 1; font-size: 0.88rem; font-weight: 500; color: #64748b; }
-    .pipeline-stage.has-count .pipeline-name { color: #cbd5e1; }
-    .pipeline-count-input {
-      width: 54px;
-      background: rgba(255,255,255,0.05);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 7px;
-      color: #a78bfa;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 700;
-      padding: 6px 0;
-      outline: none;
-      text-align: center;
-    }
-    .pipeline-count-input:focus { border-color: rgba(124,58,237,0.5); }
-    .pipeline-arrow { font-size: 0.65rem; color: #1e293b; text-align: center; padding: 0 14px; }
-
     /* FOLLOW-UPS */
     .followup-row { display: flex; align-items: center; gap: 14px; }
     .followup-count-display {
@@ -475,9 +437,7 @@
     let statView     = 'alltime';
     let statsAllTime = load('stats_alltime', { sent: 0, opened: 0, replies: 0 });
     let statsWeekly  = load('stats_' + weekKey(), { sent: 0, opened: 0, replies: 0 });
-    let pipelineCounts = load('pipeline_counts', { Contacted:0, Opened:0, Replied:0, 'Demo Booked':0, Closed:0 });
     let followupDue  = load('followup_due_' + todayKey(), 0);
-    const PIPELINE_STAGES = ['Contacted', 'Opened', 'Replied', 'Demo Booked', 'Closed'];
     const tasks = getTasksForToday();
 
     // ── STREAK CHECK ──────────────────────────────────────────────────────
@@ -526,36 +486,6 @@
 
       // Outreach stats
       renderStats();
-
-      // Pipeline
-      const pipelineEl = document.getElementById('pipeline-list');
-      pipelineEl.innerHTML = '';
-      PIPELINE_STAGES.forEach((stage, i) => {
-        const count = pipelineCounts[stage] || 0;
-        const row = document.createElement('div');
-        row.className = 'pipeline-stage' + (count > 0 ? ' has-count' : '');
-        row.innerHTML = `
-          <div class="pipeline-dot"></div>
-          <span class="pipeline-name">${stage}</span>
-          <input class="pipeline-count-input" type="number" min="0" inputmode="numeric" value="${count}" data-stage="${stage}" />`;
-        pipelineEl.appendChild(row);
-        if (i < PIPELINE_STAGES.length - 1) {
-          const arrow = document.createElement('div');
-          arrow.className = 'pipeline-arrow';
-          arrow.textContent = '↓';
-          pipelineEl.appendChild(arrow);
-        }
-      });
-      document.querySelectorAll('.pipeline-count-input').forEach(inp => {
-        inp.addEventListener('input', () => {
-          const stage = inp.dataset.stage;
-          pipelineCounts[stage] = parseInt(inp.value) || 0;
-          save('pipeline_counts', pipelineCounts);
-          const row = inp.closest('.pipeline-stage');
-          const hasCount = pipelineCounts[stage] > 0;
-          row.className = 'pipeline-stage' + (hasCount ? ' has-count' : '');
-        });
-      });
 
       // Follow-ups
       const fuEl = document.getElementById('fu-count');
@@ -639,20 +569,21 @@
       });
     });
 
-    // Fetch stats from server on load and override localStorage
+    // Fetch stats from server on load — only overrides localStorage if server has synced data
     async function fetchServerStats() {
       try {
         const res = await fetch('/api/stats');
         const data = await res.json();
-        if (data.alltime) { statsAllTime = data.alltime; save('stats_alltime', statsAllTime); }
-        if (data.weekly)  { statsWeekly  = data.weekly;  save('stats_' + weekKey(), statsWeekly); }
+        // Only trust server data if it's been synced at least once (syncedAt is set)
         if (data.syncedAt) {
+          if (data.alltime) { statsAllTime = data.alltime; save('stats_alltime', statsAllTime); }
+          if (data.weekly)  { statsWeekly  = data.weekly;  save('stats_' + weekKey(), statsWeekly); }
           const d = new Date(data.syncedAt);
           const label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
           const el = document.getElementById('synced-at');
           if (el) el.textContent = 'Synced ' + label;
+          renderStats();
         }
-        renderStats();
       } catch {}
     }
 
