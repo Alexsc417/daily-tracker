@@ -265,23 +265,6 @@
     .outreach-val.rate { font-size: 1.3rem; }
     .outreach-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .outreach-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
-    .outreach-input-wrap { display: flex; flex-direction: column; gap: 4px; }
-    .outreach-input-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-    .outreach-input {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      color: #e2e8f0;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      font-weight: 600;
-      padding: 10px 8px;
-      outline: none;
-      width: 100%;
-      text-align: center;
-    }
-    .outreach-input:focus { border-color: rgba(124,58,237,0.5); }
 
   </style>
 </head>
@@ -406,20 +389,6 @@
             <div class="outreach-label">Replies</div>
           </div>
         </div>
-        <div class="outreach-inputs">
-          <div class="outreach-input-wrap">
-            <div class="outreach-input-label">Sent</div>
-            <input class="outreach-input" type="number" min="0" id="input-sent" placeholder="0" inputmode="numeric" />
-          </div>
-          <div class="outreach-input-wrap">
-            <div class="outreach-input-label">Opened</div>
-            <input class="outreach-input" type="number" min="0" id="input-opened" placeholder="0" inputmode="numeric" />
-          </div>
-          <div class="outreach-input-wrap">
-            <div class="outreach-input-label">Replies</div>
-            <input class="outreach-input" type="number" min="0" id="input-replies" placeholder="0" inputmode="numeric" />
-          </div>
-        </div>
         <div id="synced-at" style="font-size:0.68rem;color:#334155;margin-top:10px;text-align:right;"></div>
       </div>
 
@@ -534,9 +503,6 @@
       const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
       document.getElementById('stat-rate').textContent = rate + '%';
       document.getElementById('stat-replies').textContent = stats.replies;
-      document.getElementById('input-sent').value    = stats.sent    || '';
-      document.getElementById('input-opened').value  = stats.opened  || '';
-      document.getElementById('input-replies').value = stats.replies || '';
       document.getElementById('pill-alltime').classList.toggle('active', statView === 'alltime');
       document.getElementById('pill-weekly').classList.toggle('active', statView === 'weekly');
     }
@@ -588,17 +554,6 @@
       renderStats();
     }
 
-    ['sent', 'opened', 'replies'].forEach(field => {
-      document.getElementById('input-' + field).addEventListener('input', e => {
-        const val = parseInt(e.target.value) || 0;
-        if (statView === 'alltime') { statsAllTime[field] = val; save('stats_alltime', statsAllTime); }
-        else { statsWeekly[field] = val; save('stats_' + weekKey(), statsWeekly); }
-        const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
-        document.getElementById('stat-sent').textContent = stats.sent;
-        document.getElementById('stat-rate').textContent = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) + '%' : '0%';
-        document.getElementById('stat-replies').textContent = stats.replies;
-      });
-    });
 
     // Fetch stats from server on load — only overrides localStorage if server has synced data
     async function fetchServerStats() {
