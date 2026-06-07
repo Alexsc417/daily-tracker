@@ -22,6 +22,39 @@
       font-family: 'Space Grotesk', sans-serif;
     }
 
+    /* SPLASH */
+    .splash {
+      position: fixed;
+      inset: 0;
+      background: #080810;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      z-index: 999;
+      transition: opacity 0.6s ease;
+    }
+    .splash.hide {
+      opacity: 0;
+      pointer-events: none;
+    }
+    .splash-greeting {
+      font-size: 2rem;
+      font-weight: 700;
+      background: linear-gradient(135deg, #a78bfa, #7c3aed);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      text-align: center;
+      line-height: 1.3;
+    }
+    .splash-sub {
+      font-size: 0.85rem;
+      color: #334155;
+      margin-top: 10px;
+      font-weight: 400;
+    }
+
     /* PAGE DOTS */
     .dots {
       position: fixed;
@@ -254,6 +287,12 @@
 </head>
 <body>
 
+  <!-- SPLASH SCREEN -->
+  <div class="splash" id="splash">
+    <div class="splash-greeting" id="splash-greeting"></div>
+    <div class="splash-sub" id="splash-sub"></div>
+  </div>
+
   <!-- DOTS -->
   <div class="dots">
     <div class="dot active" id="dot-0"></div>
@@ -267,7 +306,7 @@
     <div class="slide" id="slide-0">
 
       <div class="header">
-        <h1>Hey Alex 👋</h1>
+        <h1>Tasks</h1>
         <div class="date" id="date-display"></div>
       </div>
 
@@ -584,6 +623,29 @@
     // ── INIT ─────────────────────────────────────────────────────────────
     render();
     fetchServerStats();
+
+    // ── SPLASH SCREEN ─────────────────────────────────────────────────────
+    (function() {
+      const hour = new Date().getHours();
+      let greeting, sub;
+      if (hour < 12) {
+        greeting = 'Good morning, Alex.';
+        sub = 'Let\'s make today count.';
+      } else if (hour < 18) {
+        greeting = 'Good afternoon, Alex.';
+        sub = 'Keep the momentum going.';
+      } else {
+        greeting = 'Good evening, Alex.';
+        sub = 'Finish the day strong.';
+      }
+      document.getElementById('splash-greeting').textContent = greeting;
+      document.getElementById('splash-sub').textContent = sub;
+
+      setTimeout(() => {
+        document.getElementById('splash').classList.add('hide');
+        setTimeout(() => document.getElementById('splash').remove(), 600);
+      }, 3000);
+    })();
 
     // ── PUSH NOTIFICATIONS (keep subscription alive silently) ─────────────
     function urlBase64ToUint8Array(b) {
