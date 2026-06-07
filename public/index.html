@@ -250,33 +250,6 @@
     }
     .outreach-input:focus { border-color: rgba(124,58,237,0.5); }
 
-    /* FOLLOW-UPS */
-    .followup-row { display: flex; align-items: center; gap: 14px; }
-    .followup-count-display {
-      font-size: 3rem;
-      font-weight: 700;
-      color: #a78bfa;
-      line-height: 1;
-      min-width: 64px;
-    }
-    .followup-count-display.zero { color: #1e293b; }
-    .followup-right { flex: 1; }
-    .followup-label { font-size: 0.88rem; color: #cbd5e1; font-weight: 500; }
-    .followup-sub { font-size: 0.75rem; color: #475569; margin-top: 3px; }
-    .followup-btns { display: flex; gap: 8px; margin-top: 10px; }
-    .fu-btn {
-      background: rgba(124,58,237,0.15);
-      border: 1px solid rgba(124,58,237,0.25);
-      border-radius: 8px;
-      color: #a78bfa;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.82rem;
-      font-weight: 600;
-      padding: 8px 14px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
-    .fu-btn.primary { background: #7c3aed; border-color: #7c3aed; color: #fff; }
   </style>
 </head>
 <body>
@@ -328,7 +301,7 @@
     <div class="slide" id="slide-1">
 
       <div class="p2-header">
-        <h1>Outreach 📈</h1>
+        <h1>Outreach</h1>
         <div class="sub" id="date-display-2"></div>
       </div>
 
@@ -369,20 +342,6 @@
         <div id="synced-at" style="font-size:0.68rem;color:#334155;margin-top:10px;text-align:right;"></div>
       </div>
 
-      <div class="card">
-        <div class="card-label">Follow-ups Due Today</div>
-        <div class="followup-row">
-          <div class="followup-count-display zero" id="fu-count">0</div>
-          <div class="followup-right">
-            <div class="followup-label" id="fu-label">No follow-ups due</div>
-            <div class="followup-sub" id="fu-sub">Tap Set to add today's count</div>
-            <div class="followup-btns">
-              <button class="fu-btn" onclick="adjustFollowups(-1)">− Sent one</button>
-              <button class="fu-btn primary" onclick="setFollowups()">Set</button>
-            </div>
-          </div>
-        </div>
-      </div>
 
     </div>
   </div>
@@ -437,7 +396,6 @@
     let statView     = 'alltime';
     let statsAllTime = load('stats_alltime', { sent: 0, opened: 0, replies: 0 });
     let statsWeekly  = load('stats_' + weekKey(), { sent: 0, opened: 0, replies: 0 });
-    let followupDue  = load('followup_due_' + todayKey(), 0);
     const tasks = getTasksForToday();
 
     // ── STREAK CHECK ──────────────────────────────────────────────────────
@@ -487,14 +445,6 @@
       // Outreach stats
       renderStats();
 
-      // Follow-ups
-      const fuEl = document.getElementById('fu-count');
-      fuEl.textContent = followupDue;
-      fuEl.className = 'followup-count-display' + (followupDue === 0 ? ' zero' : '');
-      document.getElementById('fu-label').textContent = followupDue === 0
-        ? 'No follow-ups due' : `${followupDue} follow-up${followupDue > 1 ? 's' : ''} to send`;
-      document.getElementById('fu-sub').textContent = followupDue === 0
-        ? 'Tap Set to add today\'s count' : 'Tap "Sent one" each time you send';
     }
 
     function renderStats() {
@@ -585,24 +535,6 @@
           renderStats();
         }
       } catch {}
-    }
-
-    // ── FOLLOW-UPS ────────────────────────────────────────────────────────
-    function adjustFollowups(delta) {
-      followupDue = Math.max(followupDue + delta, 0);
-      save('followup_due_' + todayKey(), followupDue);
-      const fuEl = document.getElementById('fu-count');
-      fuEl.textContent = followupDue;
-      fuEl.className = 'followup-count-display' + (followupDue === 0 ? ' zero' : '');
-      document.getElementById('fu-label').textContent = followupDue === 0
-        ? 'No follow-ups due' : `${followupDue} follow-up${followupDue > 1 ? 's' : ''} to send`;
-      document.getElementById('fu-sub').textContent = followupDue === 0
-        ? 'Tap Set to add today\'s count' : 'Tap "Sent one" each time you send';
-    }
-
-    function setFollowups() {
-      const val = prompt('How many follow-ups due today?', followupDue);
-      if (val !== null) { followupDue = Math.max(parseInt(val) || 0, 0); save('followup_due_' + todayKey(), followupDue); adjustFollowups(0); }
     }
 
     // ── SWIPE / SLIDE ─────────────────────────────────────────────────────
