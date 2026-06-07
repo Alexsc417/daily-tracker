@@ -292,6 +292,48 @@
     <div class="splash-greeting" id="splash-greeting"></div>
     <div class="splash-sub" id="splash-sub"></div>
   </div>
+  <script>
+    // Runs instantly — no black flash
+    (function() {
+      const hour = new Date().getHours();
+      const quotes = [
+        "Let's make today count.",
+        "One step closer to the first client.",
+        "Show up. Stack the days.",
+        "The streak won't build itself.",
+        "Small actions, big results.",
+        "Consistency beats talent.",
+        "Every email is a chance.",
+        "You're building something real.",
+        "Keep the momentum going.",
+        "The grind is the game.",
+        "Outwork the doubt.",
+        "Progress over perfection.",
+        "Do the tasks. Trust the process.",
+        "First client is closer than you think.",
+        "Make it a great one.",
+        "Your future self is watching.",
+        "Stay locked in.",
+        "Discipline is the shortcut.",
+        "One more day, one more step.",
+        "ChatAero needs you at your best.",
+        "The work compounds. Keep going.",
+        "Be the founder who shows up.",
+        "Good days start with good habits.",
+        "Don't wait — create.",
+        "Finish strong.",
+        "Every action moves the needle.",
+        "The best time to work is now.",
+        "Believe it. Build it.",
+        "Make today worth remembering.",
+        "You've got this, Alex.",
+      ];
+      const greeting = hour < 12 ? 'Good morning, Alex.' : hour < 18 ? 'Good afternoon, Alex.' : 'Good evening, Alex.';
+      const quote = quotes[Math.floor(Math.random() * quotes.length)];
+      document.getElementById('splash-greeting').textContent = greeting;
+      document.getElementById('splash-sub').textContent = quote;
+    })();
+  </script>
 
   <!-- DOTS -->
   <div class="dots">
@@ -624,28 +666,11 @@
     render();
     fetchServerStats();
 
-    // ── SPLASH SCREEN ─────────────────────────────────────────────────────
-    (function() {
-      const hour = new Date().getHours();
-      let greeting, sub;
-      if (hour < 12) {
-        greeting = 'Good morning, Alex.';
-        sub = 'Let\'s make today count.';
-      } else if (hour < 18) {
-        greeting = 'Good afternoon, Alex.';
-        sub = 'Keep the momentum going.';
-      } else {
-        greeting = 'Good evening, Alex.';
-        sub = 'Finish the day strong.';
-      }
-      document.getElementById('splash-greeting').textContent = greeting;
-      document.getElementById('splash-sub').textContent = sub;
-
-      setTimeout(() => {
-        document.getElementById('splash').classList.add('hide');
-        setTimeout(() => document.getElementById('splash').remove(), 600);
-      }, 3000);
-    })();
+    // ── SPLASH SCREEN DISMISS ─────────────────────────────────────────────
+    setTimeout(() => {
+      document.getElementById('splash').classList.add('hide');
+      setTimeout(() => document.getElementById('splash').remove(), 600);
+    }, 3000);
 
     // ── PUSH NOTIFICATIONS (keep subscription alive silently) ─────────────
     function urlBase64ToUint8Array(b) {
