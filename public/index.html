@@ -155,80 +155,228 @@
     }
     .reset-btn:hover { border-color: rgba(124,58,237,0.4); color: #a78bfa; }
 
-    /* CAR FUND */
-    .fund-top {
+    /* FIRST CLIENT GOAL */
+    .client-goal-row {
       display: flex;
-      justify-content: space-between;
-      align-items: baseline;
-      margin-bottom: 12px;
+      align-items: center;
+      gap: 16px;
     }
-    .fund-title { font-size: 0.95rem; font-weight: 500; color: #cbd5e1; }
-    .fund-amount { font-size: 1.4rem; font-weight: 700; color: #a78bfa; }
-
-    .progress-bar-bg {
-      background: rgba(255,255,255,0.06);
+    .client-toggle {
+      position: relative;
+      width: 52px;
+      height: 28px;
+      flex-shrink: 0;
+    }
+    .client-toggle input { opacity: 0; width: 0; height: 0; }
+    .client-toggle-slider {
+      position: absolute;
+      inset: 0;
+      background: rgba(255,255,255,0.08);
+      border: 1px solid rgba(255,255,255,0.1);
       border-radius: 99px;
-      height: 8px;
-      width: 100%;
-      overflow: hidden;
-      margin-bottom: 8px;
+      cursor: pointer;
+      transition: all 0.25s;
     }
-    .progress-bar-fill {
-      height: 100%;
-      background: linear-gradient(90deg, #7c3aed, #a78bfa);
-      border-radius: 99px;
-      transition: width 0.4s ease;
+    .client-toggle-slider::before {
+      content: '';
+      position: absolute;
+      left: 4px;
+      top: 50%;
+      transform: translateY(-50%);
+      width: 18px;
+      height: 18px;
+      background: #475569;
+      border-radius: 50%;
+      transition: all 0.25s;
     }
-
-    .progress-labels {
-      display: flex;
-      justify-content: space-between;
-      font-size: 0.75rem;
+    .client-toggle input:checked + .client-toggle-slider {
+      background: linear-gradient(135deg, #7c3aed, #a78bfa);
+      border-color: #7c3aed;
+    }
+    .client-toggle input:checked + .client-toggle-slider::before {
+      left: 26px;
+      background: #fff;
+    }
+    .client-goal-text { flex: 1; }
+    .client-goal-title {
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #cbd5e1;
+    }
+    .client-goal-sub {
+      font-size: 0.78rem;
       color: #475569;
+      margin-top: 3px;
+    }
+    .client-signed {
+      color: #a78bfa;
+      font-weight: 700;
+      font-size: 1.05rem;
+    }
+    .client-celebration {
+      margin-top: 14px;
+      text-align: center;
+      font-size: 0.95rem;
+      font-weight: 600;
+      color: #a78bfa;
+      background: rgba(124,58,237,0.1);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 10px;
+      padding: 12px;
+      display: none;
+    }
+    .client-celebration.show { display: block; }
+
+    /* OUTREACH STATS */
+    .stats-toggle-row {
+      display: flex;
+      gap: 6px;
       margin-bottom: 16px;
     }
-
-    .fund-input-row {
-      display: flex;
-      gap: 8px;
-      margin-top: 4px;
-    }
-    .fund-input {
+    .toggle-pill {
       flex: 1;
       background: rgba(255,255,255,0.04);
       border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 10px;
+      border-radius: 8px;
+      color: #475569;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.78rem;
+      font-weight: 600;
+      padding: 7px 0;
+      cursor: pointer;
+      transition: all 0.15s;
+      text-align: center;
+    }
+    .toggle-pill.active {
+      background: rgba(124,58,237,0.2);
+      border-color: rgba(124,58,237,0.4);
+      color: #a78bfa;
+    }
+
+    .outreach-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+    .outreach-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 14px 10px;
+      text-align: center;
+    }
+    .outreach-val {
+      font-size: 1.6rem;
+      font-weight: 700;
+      color: #a78bfa;
+      line-height: 1;
+      margin-bottom: 5px;
+    }
+    .outreach-val.rate { font-size: 1.3rem; }
+    .outreach-label { font-size: 0.68rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .outreach-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-top: 12px; }
+    .outreach-input-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .outreach-input-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .outreach-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
       color: #e2e8f0;
       font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.9rem;
-      padding: 10px 14px;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 8px 10px;
       outline: none;
+      width: 100%;
       transition: border-color 0.15s;
+      text-align: center;
     }
-    .fund-input::placeholder { color: #334155; }
-    .fund-input:focus { border-color: rgba(124,58,237,0.5); }
+    .outreach-input:focus { border-color: rgba(124,58,237,0.5); }
 
-    .add-btn {
-      background: #7c3aed;
-      border: none;
+    /* SALES PIPELINE */
+    .pipeline { display: flex; flex-direction: column; gap: 8px; }
+    .pipeline-stage {
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
       border-radius: 10px;
-      color: #fff;
+    }
+    .pipeline-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background: #7c3aed;
+      flex-shrink: 0;
+      opacity: 0.5;
+    }
+    .pipeline-stage.has-count .pipeline-dot { opacity: 1; }
+    .pipeline-name {
+      flex: 1;
+      font-size: 0.88rem;
+      font-weight: 500;
+      color: #94a3b8;
+    }
+    .pipeline-stage.has-count .pipeline-name { color: #cbd5e1; }
+    .pipeline-count-input {
+      width: 54px;
+      background: rgba(255,255,255,0.05);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 7px;
+      color: #a78bfa;
       font-family: 'Space Grotesk', sans-serif;
       font-size: 0.9rem;
-      font-weight: 600;
-      padding: 10px 18px;
-      cursor: pointer;
-      transition: background 0.15s;
-    }
-    .add-btn:hover { background: #6d28d9; }
-
-    .goal-reached {
+      font-weight: 700;
+      padding: 5px 0;
+      outline: none;
       text-align: center;
-      font-size: 1rem;
-      font-weight: 600;
-      color: #a78bfa;
-      padding: 8px 0 4px;
+      transition: border-color 0.15s;
     }
+    .pipeline-count-input:focus { border-color: rgba(124,58,237,0.5); }
+    .pipeline-arrow {
+      font-size: 0.65rem;
+      color: #334155;
+      text-align: center;
+      padding: 0 14px;
+      letter-spacing: 0.05em;
+    }
+
+    /* FOLLOW-UPS DUE */
+    .followup-row {
+      display: flex;
+      align-items: center;
+      gap: 14px;
+    }
+    .followup-count-display {
+      font-size: 3rem;
+      font-weight: 700;
+      color: #a78bfa;
+      line-height: 1;
+      min-width: 64px;
+    }
+    .followup-count-display.zero { color: #334155; }
+    .followup-right { flex: 1; }
+    .followup-label { font-size: 0.88rem; color: #cbd5e1; font-weight: 500; margin-bottom: 10px; }
+    .followup-sub { font-size: 0.75rem; color: #475569; margin-top: 3px; }
+    .followup-btns { display: flex; gap: 8px; }
+    .fu-btn {
+      background: rgba(124,58,237,0.15);
+      border: 1px solid rgba(124,58,237,0.25);
+      border-radius: 8px;
+      color: #a78bfa;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 7px 14px;
+      cursor: pointer;
+      transition: all 0.15s;
+    }
+    .fu-btn:hover { background: rgba(124,58,237,0.25); }
+    .fu-btn.primary {
+      background: #7c3aed;
+      border-color: #7c3aed;
+      color: #fff;
+    }
+    .fu-btn.primary:hover { background: #6d28d9; }
 
     /* STATS */
     .stats-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
@@ -294,25 +442,81 @@
       </div>
     </div>
 
-    <!-- CAR FUND CARD -->
+    <!-- FIRST CLIENT GOAL -->
     <div class="card">
-      <div class="card-label">Car Fund Goal</div>
-      <div class="fund-top">
-        <span class="fund-title">Progress to £2,500</span>
-        <span class="fund-amount" id="fund-amount">£0</span>
+      <div class="card-label">First Client Goal</div>
+      <div class="client-goal-row">
+        <label class="client-toggle">
+          <input type="checkbox" id="client-toggle-input" />
+          <span class="client-toggle-slider"></span>
+        </label>
+        <div class="client-goal-text">
+          <div class="client-goal-title" id="client-goal-title">Not signed yet</div>
+          <div class="client-goal-sub" id="client-goal-sub">Toggle when you land your first client 🎯</div>
+        </div>
+        <div style="font-size:1.5rem;" id="client-emoji">0<span style="color:#334155;font-size:1rem;">/1</span></div>
       </div>
-      <div class="progress-bar-bg">
-        <div class="progress-bar-fill" id="progress-fill" style="width:0%"></div>
+      <div class="client-celebration" id="client-celebration">
+        🎉 First client signed! ChatAero is live. Let's get the next one.
       </div>
-      <div class="progress-labels">
-        <span>£0</span>
-        <span id="fund-left">£2,500 to go</span>
-        <span>£2,500</span>
+    </div>
+
+    <!-- OUTREACH STATS -->
+    <div class="card">
+      <div class="card-label">Outreach Stats</div>
+      <div class="stats-toggle-row">
+        <button class="toggle-pill active" id="pill-alltime" onclick="setStatView('alltime')">All Time</button>
+        <button class="toggle-pill" id="pill-weekly" onclick="setStatView('weekly')">This Week</button>
       </div>
-      <div id="goal-reached-msg"></div>
-      <div class="fund-input-row">
-        <input class="fund-input" id="fund-input" type="number" min="0" placeholder="Add £ earned..." />
-        <button class="add-btn" id="add-btn">Add</button>
+      <div class="outreach-grid">
+        <div class="outreach-box">
+          <div class="outreach-val" id="stat-sent">0</div>
+          <div class="outreach-label">Emails Sent</div>
+        </div>
+        <div class="outreach-box">
+          <div class="outreach-val rate" id="stat-rate">0%</div>
+          <div class="outreach-label">Open Rate</div>
+        </div>
+        <div class="outreach-box">
+          <div class="outreach-val" id="stat-replies">0</div>
+          <div class="outreach-label">Replies</div>
+        </div>
+      </div>
+      <div class="outreach-inputs" id="outreach-inputs">
+        <div class="outreach-input-wrap">
+          <div class="outreach-input-label">Sent</div>
+          <input class="outreach-input" type="number" min="0" id="input-sent" placeholder="0" />
+        </div>
+        <div class="outreach-input-wrap">
+          <div class="outreach-input-label">Opened</div>
+          <input class="outreach-input" type="number" min="0" id="input-opened" placeholder="0" />
+        </div>
+        <div class="outreach-input-wrap">
+          <div class="outreach-input-label">Replies</div>
+          <input class="outreach-input" type="number" min="0" id="input-replies" placeholder="0" />
+        </div>
+      </div>
+    </div>
+
+    <!-- SALES PIPELINE -->
+    <div class="card">
+      <div class="card-label">Sales Pipeline</div>
+      <div class="pipeline" id="pipeline-list"></div>
+    </div>
+
+    <!-- FOLLOW-UPS DUE -->
+    <div class="card">
+      <div class="card-label">Follow-ups Due Today</div>
+      <div class="followup-row">
+        <div class="followup-count-display" id="fu-count">0</div>
+        <div class="followup-right">
+          <div class="followup-label" id="fu-label">No follow-ups due</div>
+          <div class="followup-sub" id="fu-sub">Set how many are due, mark off as you send</div>
+          <div class="followup-btns" style="margin-top:10px;">
+            <button class="fu-btn" onclick="adjustFollowups(-1)">− Sent one</button>
+            <button class="fu-btn primary" onclick="setFollowupModal()">Set</button>
+          </div>
+        </div>
       </div>
     </div>
 
@@ -341,18 +545,30 @@
 
   <script>
     // ── HELPERS ──────────────────────────────────────────────────────────
-    const GOAL = 2500;
-
     function todayKey() {
       const d = new Date();
       return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`;
     }
 
-    function getDay() { return new Date().getDay(); } // 0=Sun,1=Mon,...,6=Sat
+    function weekKey() {
+      const d = new Date();
+      const day = d.getDay(); // 0=Sun
+      const monday = new Date(d);
+      monday.setDate(d.getDate() - (day === 0 ? 6 : day - 1));
+      return `week-${monday.getFullYear()}-${String(monday.getMonth()+1).padStart(2,'0')}-${String(monday.getDate()).padStart(2,'0')}`;
+    }
+
+    function getDay() { return new Date().getDay(); }
 
     function formatDate(d) {
       return d.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric' });
     }
+
+    function load(key, fallback) {
+      try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; }
+      catch { return fallback; }
+    }
+    function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
 
     // ── TASKS DEFINITION ─────────────────────────────────────────────────
     function getTasksForToday() {
@@ -362,54 +578,53 @@
         { id: 'upwork',    label: 'Upwork proposal sent',                        badge: '1+' },
         { id: 'ai',        label: '30 mins AI learning done',                    badge: '30 min' },
       ];
-      if (day === 0 || day === 4) { // Sun or Thu
+      if (day === 0 || day === 4) {
         tasks.push({ id: 'followup', label: 'Schedule 30 follow up emails (send tomorrow)', badge: '30' });
-      } else if (day === 1 || day === 2 || day === 3) { // Mon Tue Wed
+      } else if (day === 1 || day === 2 || day === 3) {
         tasks.push({ id: 'coldemail', label: 'Schedule 30 cold emails (send tomorrow)', badge: '30' });
       }
-      if (day === 5) { // Friday
+      if (day === 5) {
         tasks.push({ id: 'updateleads', label: 'Update leads list', badge: '📋' });
       }
-      // Sat (6) — daily only, nothing extra
       return tasks;
     }
 
-    // ── STORAGE ──────────────────────────────────────────────────────────
-    function load(key, fallback) {
-      try { const v = localStorage.getItem(key); return v !== null ? JSON.parse(v) : fallback; }
-      catch { return fallback; }
-    }
-    function save(key, val) { localStorage.setItem(key, JSON.stringify(val)); }
-
     // ── STATE ─────────────────────────────────────────────────────────────
     let completions = load('completions_' + todayKey(), {});
-    let earned      = load('car_earned', 0);
     let streak      = load('streak', 0);
     let totalDays   = load('total_days', 0);
     let lastDone    = load('last_done_date', null);
 
+    // Client goal
+    let clientSigned = load('client_signed', false);
+
+    // Outreach stats
+    let statView = 'alltime';
+    let statsAllTime = load('stats_alltime', { sent: 0, opened: 0, replies: 0 });
+    let statsWeekly  = load('stats_' + weekKey(), { sent: 0, opened: 0, replies: 0 });
+
+    // Pipeline
+    const PIPELINE_STAGES = ['Contacted', 'Opened', 'Replied', 'Demo Booked', 'Closed'];
+    let pipelineCounts = load('pipeline_counts', { Contacted:0, Opened:0, Replied:0, 'Demo Booked':0, Closed:0 });
+
+    // Follow-ups
+    let followupDue  = load('followup_due_' + todayKey(), 0);
+
     const tasks = getTasksForToday();
 
-    // ── STREAK CHECK (run once on load) ──────────────────────────────────
+    // ── STREAK CHECK ──────────────────────────────────────────────────────
     (function checkStreak() {
       if (!lastDone) return;
       const today = todayKey();
-      if (lastDone === today) return; // already handled today
-
+      if (lastDone === today) return;
       const last = new Date(lastDone);
       const now  = new Date(today);
       const diff = Math.round((now - last) / 86400000);
-
-      if (diff > 1) {
-        // Missed a day — reset streak
-        streak = 0;
-        save('streak', 0);
-      }
+      if (diff > 1) { streak = 0; save('streak', 0); }
     })();
 
     // ── RENDER ────────────────────────────────────────────────────────────
     function render() {
-      // Date
       document.getElementById('date-display').textContent = formatDate(new Date());
 
       // Tasks
@@ -435,27 +650,83 @@
       // Banner
       const remaining = tasks.filter(t => !completions[t.id]).length;
       const banner = document.getElementById('banner');
-      if (remaining === 0) {
-        banner.textContent = '🎯 All done for today! Smashing it Alex.';
-      } else {
-        banner.textContent = `${remaining} task${remaining > 1 ? 's' : ''} left today — keep going!`;
-      }
+      banner.textContent = remaining === 0
+        ? '🎯 All done for today! Smashing it Alex.'
+        : `${remaining} task${remaining > 1 ? 's' : ''} left today — keep going!`;
 
-      // Car fund
-      const pct = Math.min((earned / GOAL) * 100, 100);
-      document.getElementById('fund-amount').textContent = '£' + earned.toLocaleString('en-GB');
-      document.getElementById('progress-fill').style.width = pct + '%';
-      const left = Math.max(GOAL - earned, 0);
-      document.getElementById('fund-left').textContent = left > 0 ? `£${left.toLocaleString('en-GB')} to go` : '£0 to go';
-      const goalMsg = document.getElementById('goal-reached-msg');
-      goalMsg.innerHTML = earned >= GOAL ? '<div class="goal-reached">Goal reached! 🎉</div>' : '';
+      // First client
+      const toggle = document.getElementById('client-toggle-input');
+      toggle.checked = clientSigned;
+      document.getElementById('client-goal-title').textContent = clientSigned ? 'First client signed! 🎉' : 'Not signed yet';
+      document.getElementById('client-goal-sub').textContent = clientSigned
+        ? 'ChatAero is live — now get client #2'
+        : 'Toggle when you land your first client 🎯';
+      document.getElementById('client-emoji').innerHTML = clientSigned
+        ? '<span class="client-signed">1/1</span>'
+        : '0<span style="color:#334155;font-size:1rem;">/1</span>';
+      const celeb = document.getElementById('client-celebration');
+      clientSigned ? celeb.classList.add('show') : celeb.classList.remove('show');
 
-      // Stats
+      // Outreach stats
+      const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
+      document.getElementById('stat-sent').textContent = stats.sent;
+      const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
+      document.getElementById('stat-rate').textContent = rate + '%';
+      document.getElementById('stat-replies').textContent = stats.replies;
+      document.getElementById('input-sent').value    = stats.sent    || '';
+      document.getElementById('input-opened').value  = stats.opened  || '';
+      document.getElementById('input-replies').value = stats.replies || '';
+
+      // Pipeline
+      const pipelineList = document.getElementById('pipeline-list');
+      pipelineList.innerHTML = '';
+      PIPELINE_STAGES.forEach((stage, i) => {
+        const count = pipelineCounts[stage] || 0;
+        const row = document.createElement('div');
+        row.className = 'pipeline-stage' + (count > 0 ? ' has-count' : '');
+        row.innerHTML = `
+          <div class="pipeline-dot"></div>
+          <span class="pipeline-name">${stage}</span>
+          <input class="pipeline-count-input" type="number" min="0" value="${count}" data-stage="${stage}" />
+        `;
+        pipelineList.appendChild(row);
+        if (i < PIPELINE_STAGES.length - 1) {
+          const arrow = document.createElement('div');
+          arrow.className = 'pipeline-arrow';
+          arrow.textContent = '↓';
+          pipelineList.appendChild(arrow);
+        }
+      });
+
+      // Bind pipeline inputs
+      document.querySelectorAll('.pipeline-count-input').forEach(inp => {
+        inp.addEventListener('input', () => {
+          const stage = inp.dataset.stage;
+          const val = parseInt(inp.value) || 0;
+          pipelineCounts[stage] = val;
+          save('pipeline_counts', pipelineCounts);
+          inp.closest('.pipeline-stage').className = 'pipeline-stage' + (val > 0 ? ' has-count' : '');
+          inp.closest('.pipeline-stage').querySelector('.pipeline-dot').style.opacity = val > 0 ? '1' : '0.5';
+        });
+      });
+
+      // Follow-ups
+      const fuEl = document.getElementById('fu-count');
+      fuEl.textContent = followupDue;
+      fuEl.className = 'followup-count-display' + (followupDue === 0 ? ' zero' : '');
+      document.getElementById('fu-label').textContent = followupDue === 0
+        ? 'No follow-ups due'
+        : `${followupDue} follow-up${followupDue > 1 ? 's' : ''} to send today`;
+      document.getElementById('fu-sub').textContent = followupDue === 0
+        ? 'Set how many are due, mark off as you send'
+        : 'Hit "Sent one" each time you send a follow-up';
+
+      // Streak / total
       document.getElementById('streak-val').textContent = streak + ' 🔥';
       document.getElementById('total-val').textContent = totalDays;
     }
 
-    // ── TOGGLE TASK ───────────────────────────────────────────────────────
+    // ── TASKS ─────────────────────────────────────────────────────────────
     function toggleTask(id) {
       completions[id] = !completions[id];
       save('completions_' + todayKey(), completions);
@@ -473,7 +744,6 @@
         save('streak', streak);
         totalDays += 1;
         save('total_days', totalDays);
-        // Tell server tasks are done so it skips the 6pm reminder
         fetch('/api/tasks-complete', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -482,9 +752,7 @@
       }
     }
 
-    // ── RESET ─────────────────────────────────────────────────────────────
     document.getElementById('reset-btn').addEventListener('click', () => {
-      // If today was already counted as a completed day, undo it
       if (lastDone === todayKey()) {
         streak = Math.max(streak - 1, 0);
         totalDays = Math.max(totalDays - 1, 0);
@@ -492,7 +760,6 @@
         save('streak', streak);
         save('total_days', totalDays);
         save('last_done_date', null);
-        // Tell server tasks are no longer complete so 6pm reminder fires again
         fetch('/api/tasks-reset', { method: 'POST' }).catch(() => {});
       }
       completions = {};
@@ -500,25 +767,62 @@
       render();
     });
 
-    // ── CAR FUND ──────────────────────────────────────────────────────────
-    document.getElementById('add-btn').addEventListener('click', addFunds);
-    document.getElementById('fund-input').addEventListener('keydown', e => {
-      if (e.key === 'Enter') addFunds();
+    // ── FIRST CLIENT GOAL ────────────────────────────────────────────────
+    document.getElementById('client-toggle-input').addEventListener('change', e => {
+      clientSigned = e.target.checked;
+      save('client_signed', clientSigned);
+      render();
     });
 
-    function addFunds() {
-      const input = document.getElementById('fund-input');
-      const val = parseFloat(input.value);
-      if (!isNaN(val) && val > 0) {
-        earned = Math.round((earned + val) * 100) / 100;
-        save('car_earned', earned);
-        input.value = '';
+    // ── OUTREACH STATS ────────────────────────────────────────────────────
+    function setStatView(view) {
+      statView = view;
+      document.getElementById('pill-alltime').classList.toggle('active', view === 'alltime');
+      document.getElementById('pill-weekly').classList.toggle('active', view === 'weekly');
+      render();
+    }
+
+    function bindOutreachInputs() {
+      ['sent', 'opened', 'replies'].forEach(field => {
+        document.getElementById('input-' + field).addEventListener('input', e => {
+          const val = parseInt(e.target.value) || 0;
+          if (statView === 'alltime') {
+            statsAllTime[field] = val;
+            save('stats_alltime', statsAllTime);
+          } else {
+            statsWeekly[field] = val;
+            save('stats_' + weekKey(), statsWeekly);
+          }
+          // Update display without full re-render to avoid cursor jump
+          const stats = statView === 'alltime' ? statsAllTime : statsWeekly;
+          document.getElementById('stat-sent').textContent = stats.sent;
+          const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
+          document.getElementById('stat-rate').textContent = rate + '%';
+          document.getElementById('stat-replies').textContent = stats.replies;
+        });
+      });
+    }
+
+    // ── FOLLOW-UPS ────────────────────────────────────────────────────────
+    function adjustFollowups(delta) {
+      followupDue = Math.max(followupDue + delta, 0);
+      save('followup_due_' + todayKey(), followupDue);
+      render();
+    }
+
+    function setFollowupModal() {
+      const val = prompt('How many follow-ups are due today?', followupDue);
+      if (val !== null) {
+        const num = Math.max(parseInt(val) || 0, 0);
+        followupDue = num;
+        save('followup_due_' + todayKey(), followupDue);
         render();
       }
     }
 
     // ── INIT ─────────────────────────────────────────────────────────────
     render();
+    bindOutreachInputs();
 
     // ── PUSH NOTIFICATIONS ───────────────────────────────────────────────
     const enableBtn = document.getElementById('enable-notif-btn');
@@ -587,7 +891,6 @@
       }
     }
 
-    // Enable button — this is a user gesture so browser WILL show the popup
     enableBtn.addEventListener('click', async () => {
       enableBtn.disabled = true;
       enableBtn.textContent = 'Setting up...';
@@ -600,7 +903,6 @@
       updateEnableBtn();
     });
 
-    // Test button — fires a test push via server
     testBtn.addEventListener('click', async () => {
       testBtn.textContent = 'Sending...';
       testBtn.disabled = true;
@@ -613,7 +915,6 @@
       setTimeout(() => { testBtn.textContent = 'Test'; testBtn.disabled = false; }, 2000);
     });
 
-    // On load: register SW silently, and if already granted — re-subscribe
     (async () => {
       updateEnableBtn();
       const reg = await registerSW();
