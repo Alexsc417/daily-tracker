@@ -280,20 +280,22 @@ function iconSvg(size) {
   const r = Math.round(size * 0.22);
   const fontSize = Math.round(size * 0.52);
   const y = Math.round(size * 0.64);
+  const fontSize2 = Math.round(size * 0.42);
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
   <rect width="${size}" height="${size}" rx="${r}" fill="#000000"/>
-  <text x="${size / 2}" y="${y}"
+  <text x="${size / 2}" y="${size / 2}"
     text-anchor="middle"
+    dominant-baseline="central"
     font-family="'Arial Rounded MT Bold', 'Nunito', 'Varela Round', Arial, sans-serif"
-    font-size="${fontSize}"
+    font-size="${fontSize2}"
     font-weight="900"
     fill="#7c3aed"
     paint-order="stroke"
     stroke="#7c3aed"
-    stroke-width="${Math.round(size * 0.04)}"
+    stroke-width="${Math.round(size * 0.03)}"
     stroke-linejoin="round"
     stroke-linecap="round"
-    letter-spacing="-${Math.round(size * 0.02)}">CA</text>
+    letter-spacing="-${Math.round(size * 0.015)}">CA</text>
 </svg>`;
 }
 

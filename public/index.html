@@ -419,6 +419,23 @@
         </div>
       </div>
 
+      <!-- NOTIFICATIONS — only visible if permission not yet granted -->
+      <div id="notif-section" style="display:none;">
+        <button id="enable-notif-btn" style="
+          width:100%;
+          background:rgba(124,58,237,0.12);
+          border:1px solid rgba(124,58,237,0.25);
+          border-radius:12px;
+          color:#a78bfa;
+          font-family:'Space Grotesk',sans-serif;
+          font-size:0.88rem;
+          font-weight:600;
+          padding:14px;
+          cursor:pointer;
+          -webkit-tap-highlight-color:transparent;
+        ">🔔 Enable Notifications</button>
+      </div>
+
     </div>
 
     <!-- PAGE 2: OUTREACH + PIPELINE + FOLLOWUPS -->
@@ -808,25 +825,48 @@ Alex Carver`,
       setTimeout(() => document.getElementById('splash').remove(), 600);
     }, 3000);
 
-    // ── PUSH NOTIFICATIONS (keep subscription alive silently) ─────────────
+    // ── PUSH NOTIFICATIONS ────────────────────────────────────────────────
     function urlBase64ToUint8Array(b) {
       const pad = '='.repeat((4 - b.length % 4) % 4);
       const base64 = (b + pad).replace(/-/g, '+').replace(/_/g, '/');
       return Uint8Array.from([...atob(base64)].map(c => c.charCodeAt(0)));
     }
+
+    async function subscribeToNotifications(reg) {
+      try {
+        const res = await fetch('/api/vapid-public-key');
+        const { publicKey } = await res.json();
+        let sub = await reg.pushManager.getSubscription();
+        if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
+        await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
+      } catch {}
+    }
+
     (async () => {
       if (!('serviceWorker' in navigator) || !('PushManager' in window)) return;
-      try {
-        const reg = await navigator.serviceWorker.register('/sw.js');
-        await navigator.serviceWorker.ready;
-        if (Notification.permission === 'granted') {
-          const res = await fetch('/api/vapid-public-key');
-          const { publicKey } = await res.json();
-          let sub = await reg.pushManager.getSubscription();
-          if (!sub) sub = await reg.pushManager.subscribe({ userVisibleOnly: true, applicationServerKey: urlBase64ToUint8Array(publicKey) });
-          await fetch('/api/subscribe', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(sub) });
-        }
-      } catch {}
+      const reg = await navigator.serviceWorker.register('/sw.js').catch(() => null);
+      if (!reg) return;
+      await navigator.serviceWorker.ready;
+
+      const section = document.getElementById('notif-section');
+      const btn = document.getElementById('enable-notif-btn');
+
+      if (Notification.permission === 'granted') {
+        // Already granted — re-subscribe silently, keep button hidden
+        await subscribeToNotifications(reg);
+      } else if (Notification.permission === 'default') {
+        // Not yet asked — show the button
+        section.style.display = 'block';
+        btn.addEventListener('click', async () => {
+          const permission = await Notification.requestPermission();
+          if (permission === 'granted') {
+            await subscribeToNotifications(reg);
+          }
+          // Hide button regardless of outcome
+          section.style.display = 'none';
+        });
+      }
+      // If 'denied' — stay hidden, nothing we can do
     })();
   </script>
 </body>
