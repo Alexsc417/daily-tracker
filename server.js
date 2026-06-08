@@ -275,24 +275,25 @@ cron.schedule('0 18 * * *', () => {
 
 }, { timezone: 'Europe/London' });
 
-// ── ICON — black background, purple CA (ChatAero brand style) ─────────
+// ── ICON — black background, bubbly purple CA ────────────────────────
 function iconSvg(size) {
-  const r = Math.round(size * 0.18);
-  // Designed on 200x200 grid
-  // C: thick rounded C — outer rounded rect minus inner cutout, open right
-  const cPath = `
-    M 116 12 L 36 12
-    Q 12 12 12 36 L 12 164
-    Q 12 188 36 188 L 116 188
-    L 116 158 L 44 158
-    Q 36 158 36 150 L 36 50
-    Q 36 42 44 42 L 116 42 Z`;
-  // A: solid triangle — left base at C's bottom-right, peak at top, right base far right
-  const aPath = `M 116 188 L 162 12 L 187 188 Z`;
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 200 200">
-  <rect width="200" height="200" rx="${r}" fill="#000000"/>
-  <path d="${cPath}" fill="#7c3aed"/>
-  <path d="${aPath}" fill="#7c3aed"/>
+  const r = Math.round(size * 0.22);
+  const fontSize = Math.round(size * 0.52);
+  const y = Math.round(size * 0.64);
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
+  <rect width="${size}" height="${size}" rx="${r}" fill="#000000"/>
+  <text x="${size / 2}" y="${y}"
+    text-anchor="middle"
+    font-family="'Arial Rounded MT Bold', 'Nunito', 'Varela Round', Arial, sans-serif"
+    font-size="${fontSize}"
+    font-weight="900"
+    fill="#7c3aed"
+    paint-order="stroke"
+    stroke="#7c3aed"
+    stroke-width="${Math.round(size * 0.04)}"
+    stroke-linejoin="round"
+    stroke-linecap="round"
+    letter-spacing="-${Math.round(size * 0.02)}">CA</text>
 </svg>`;
 }
 
