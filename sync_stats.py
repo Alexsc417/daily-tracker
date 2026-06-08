@@ -2,6 +2,16 @@
 """
 ChatAero Stats Sync
 Runs daily at 8am — reads ChatAero Leads.xlsx and pushes stats to Railway.
+
+Column indices (0-based):
+  7:  Emailed
+  8:  Date Sent
+  9:  Opened
+  12: Replied
+  13: Follow-up Template (A/B/C)
+  14: Follow-up Sent Date
+  15: Follow-up Opened
+  16: Follow-up Replied
 """
 
 import json
@@ -12,10 +22,15 @@ from pathlib import Path
 EXCEL_PATH = Path.home() / "chataero-context" / "ChatAero Leads.xlsx"
 RAILWAY_URL = "https://dailytracker.up.railway.app/api/stats"
 
+TEMPLATE_MAP = {
+    'A': 'free-demo',
+    'B': 'pain-point',
+    'C': 'curiosity',
+}
+
 def get_week_start():
     today = datetime.now().date()
-    days_since_monday = today.weekday()
-    return today - timedelta(days=days_since_monday)
+    return today - timedelta(days=today.weekday())
 
 def parse_date(val):
     if not val:
@@ -26,6 +41,9 @@ def parse_date(val):
         except ValueError:
             continue
     return None
+
+def yes(val):
+    return str(val).strip().lower() == 'yes' if val else False
 
 def calculate_stats():
     try:
@@ -41,32 +59,48 @@ def calculate_stats():
 
     alltime = {"sent": 0, "opened": 0, "replies": 0}
     weekly  = {"sent": 0, "opened": 0, "replies": 0}
+    templates = {
+        'free-demo':   {"sent": 0, "opened": 0, "replies": 0},
+        'pain-point':  {"sent": 0, "opened": 0, "replies": 0},
+        'curiosity':   {"sent": 0, "opened": 0, "replies": 0},
+    }
 
     for row in ws.iter_rows(min_row=2, values_only=True):
-        emailed  = str(row[7]).strip().lower() == "yes" if row[7] else False
-        date_val = parse_date(row[8]) if len(row) > 8 else None
-        opened   = str(row[9]).strip().lower() == "yes" if len(row) > 9 and row[9] else False
-        replied  = str(row[12]).strip().lower() == "yes" if len(row) > 12 and row[12] else False
+        emailed       = yes(row[7])
+        date_sent     = parse_date(row[8]) if len(row) > 8 else None
+        opened        = yes(row[9])        if len(row) > 9  else False
+        replied       = yes(row[12])       if len(row) > 12 else False
+        fu_template   = str(row[13]).strip().upper() if len(row) > 13 and row[13] else None
+        fu_opened     = yes(row[15])       if len(row) > 15 else False
+        fu_replied    = yes(row[16])       if len(row) > 16 else False
 
+        # All-time cold email stats
         if emailed:
             alltime["sent"] += 1
-            if opened:
-                alltime["opened"] += 1
-            if replied:
-                alltime["replies"] += 1
+            if opened:   alltime["opened"]  += 1
+            if replied:  alltime["replies"] += 1
 
-            # Weekly — only count if Date Sent is this week
-            if date_val and date_val >= week_start:
+            # Weekly cold email stats
+            if date_sent and date_sent >= week_start:
                 weekly["sent"] += 1
-                if opened:
-                    weekly["opened"] += 1
-                if replied:
-                    weekly["replies"] += 1
+                if opened:  weekly["opened"]  += 1
+                if replied: weekly["replies"] += 1
 
-    return alltime, weekly
+        # Per-template follow-up stats
+        if fu_template and fu_template in TEMPLATE_MAP:
+            key = TEMPLATE_MAP[fu_template]
+            templates[key]["sent"] += 1
+            if fu_opened:  templates[key]["opened"]  += 1
+            if fu_replied: templates[key]["replies"] += 1
 
-def push_stats(alltime, weekly):
-    payload = json.dumps({"alltime": alltime, "weekly": weekly}).encode()
+    return alltime, weekly, templates
+
+def push_stats(alltime, weekly, templates):
+    payload = json.dumps({
+        "alltime":   alltime,
+        "weekly":    weekly,
+        "templates": templates,
+    }).encode()
     req = urllib.request.Request(
         RAILWAY_URL,
         data=payload,
@@ -80,9 +114,9 @@ def main():
     log_path = Path.home() / "chataero-context" / "sync_stats.log"
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     try:
-        alltime, weekly = calculate_stats()
-        result = push_stats(alltime, weekly)
-        msg = f"[{timestamp}] OK — alltime: {alltime}, weekly: {weekly}"
+        alltime, weekly, templates = calculate_stats()
+        push_stats(alltime, weekly, templates)
+        msg = f"[{timestamp}] OK — alltime: {alltime}, weekly: {weekly}, templates: {templates}"
     except Exception as e:
         msg = f"[{timestamp}] ERROR — {e}"
 

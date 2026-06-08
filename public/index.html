@@ -654,6 +654,15 @@
         if (data.syncedAt) {
           if (data.alltime) { statsAllTime = data.alltime; save('stats_alltime', statsAllTime); }
           if (data.weekly)  { statsWeekly  = data.weekly;  save('stats_' + weekKey(), statsWeekly); }
+          // Load per-template stats
+          if (data.templates) {
+            TEMPLATES.forEach((t, i) => {
+              if (data.templates[t.id]) {
+                templateStats[i] = data.templates[t.id];
+                save('tmpl_' + t.id, templateStats[i]);
+              }
+            });
+          }
           const d = new Date(data.syncedAt);
           const label = d.toLocaleDateString('en-GB', { day: 'numeric', month: 'short' }) + ' at ' + d.toLocaleTimeString('en-GB', { hour: '2-digit', minute: '2-digit' });
           const el = document.getElementById('synced-at');

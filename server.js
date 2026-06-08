@@ -41,6 +41,11 @@ let tasksDoneDate = null; // 'YYYY-MM-DD' when all tasks completed
 let outreachStats = {
   alltime: { sent: 0, opened: 0, replies: 0 },
   weekly:  { sent: 0, opened: 0, replies: 0 },
+  templates: {
+    'free-demo':  { sent: 0, opened: 0, replies: 0 },
+    'pain-point': { sent: 0, opened: 0, replies: 0 },
+    'curiosity':  { sent: 0, opened: 0, replies: 0 },
+  },
   syncedAt: null,
 };
 
@@ -103,9 +108,10 @@ app.get('/api/stats', (req, res) => {
 });
 
 app.post('/api/stats', (req, res) => {
-  const { alltime, weekly } = req.body;
-  if (alltime) outreachStats.alltime = alltime;
-  if (weekly)  outreachStats.weekly  = weekly;
+  const { alltime, weekly, templates } = req.body;
+  if (alltime)   outreachStats.alltime   = alltime;
+  if (weekly)    outreachStats.weekly    = weekly;
+  if (templates) outreachStats.templates = templates;
   outreachStats.syncedAt = new Date().toISOString();
   console.log('Stats updated:', outreachStats);
   res.json({ ok: true });
