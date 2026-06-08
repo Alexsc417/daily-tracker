@@ -278,18 +278,17 @@ cron.schedule('0 18 * * *', () => {
 // ── ICON — black background, purple CA (ChatAero brand style) ─────────
 function iconSvg(size) {
   const r = Math.round(size * 0.18);
-  // All paths designed on a 200x200 grid, scaled via viewBox
-  // C: thick rounded C shape, open on the right
-  // A: solid triangle connected to C's right opening
+  // Designed on 200x200 grid
+  // C: thick rounded C — outer rounded rect minus inner cutout, open right
   const cPath = `
-    M 118 13 L 32 13
-    Q 13 13 13 32 L 13 168
-    Q 13 187 32 187 L 118 187
-    L 118 161 L 38 161
-    Q 32 161 32 154 L 32 46
-    Q 32 39 38 39 L 118 39 Z`;
-  // A triangle — bottom-left connects to C's bottom arm end
-  const aPath = `M 118 187 L 165 13 L 185 13 L 185 187 Z`;
+    M 116 12 L 36 12
+    Q 12 12 12 36 L 12 164
+    Q 12 188 36 188 L 116 188
+    L 116 158 L 44 158
+    Q 36 158 36 150 L 36 50
+    Q 36 42 44 42 L 116 42 Z`;
+  // A: solid triangle — left base at C's bottom-right, peak at top, right base far right
+  const aPath = `M 116 188 L 162 12 L 187 188 Z`;
   return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 200 200">
   <rect width="200" height="200" rx="${r}" fill="#000000"/>
   <path d="${cPath}" fill="#7c3aed"/>
