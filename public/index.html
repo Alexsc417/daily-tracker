@@ -81,7 +81,7 @@
     /* SLIDER */
     .slider {
       display: flex;
-      width: 200vw;
+      width: 300vw;
       height: 100vh;
       overflow: hidden;
       transition: transform 0.35s cubic-bezier(0.4, 0, 0.2, 1);
@@ -266,6 +266,82 @@
     .outreach-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
 
+    /* TEMPLATE CARDS */
+    .template-stats-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-bottom: 12px; }
+    .template-stat-box {
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 12px;
+      padding: 12px 8px;
+      text-align: center;
+    }
+    .template-stat-val { font-size: 1.4rem; font-weight: 700; color: #a78bfa; line-height: 1; margin-bottom: 4px; }
+    .template-stat-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+
+    .template-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
+    .template-input-wrap { display: flex; flex-direction: column; gap: 4px; }
+    .template-input-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
+    .template-input {
+      background: rgba(255,255,255,0.04);
+      border: 1px solid rgba(255,255,255,0.08);
+      border-radius: 8px;
+      color: #e2e8f0;
+      font-family: 'Space Grotesk', sans-serif;
+      font-size: 0.85rem;
+      font-weight: 600;
+      padding: 9px 8px;
+      outline: none;
+      width: 100%;
+      text-align: center;
+    }
+    .template-input:focus { border-color: rgba(124,58,237,0.5); }
+
+    /* ACCORDION */
+    .accordion-trigger {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 11px 14px;
+      background: rgba(255,255,255,0.03);
+      border: 1px solid rgba(255,255,255,0.06);
+      border-radius: 10px;
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+      user-select: none;
+    }
+    .accordion-trigger:active { background: rgba(124,58,237,0.08); }
+    .accordion-subject {
+      font-size: 0.82rem;
+      font-weight: 500;
+      color: #94a3b8;
+      flex: 1;
+    }
+    .accordion-chevron {
+      font-size: 0.7rem;
+      color: #475569;
+      transition: transform 0.25s;
+      margin-left: 8px;
+    }
+    .accordion-trigger.open .accordion-chevron { transform: rotate(180deg); }
+    .accordion-trigger.open { border-color: rgba(124,58,237,0.2); }
+
+    .accordion-body {
+      max-height: 0;
+      overflow: hidden;
+      transition: max-height 0.3s ease;
+    }
+    .accordion-body.open { max-height: 600px; }
+    .accordion-email {
+      margin-top: 10px;
+      padding: 14px;
+      background: rgba(255,255,255,0.02);
+      border: 1px solid rgba(255,255,255,0.05);
+      border-radius: 10px;
+      font-size: 0.85rem;
+      line-height: 1.65;
+      color: #94a3b8;
+      white-space: pre-wrap;
+    }
   </style>
 </head>
 <body>
@@ -322,6 +398,7 @@
   <div class="dots">
     <div class="dot active" id="dot-0"></div>
     <div class="dot" id="dot-1"></div>
+    <div class="dot" id="dot-2"></div>
   </div>
 
   <!-- SLIDER -->
@@ -394,6 +471,19 @@
 
 
     </div>
+
+    <!-- PAGE 3: EMAIL STRATS -->
+    <div class="slide" id="slide-2">
+
+      <div class="p2-header">
+        <h1>Email Strats</h1>
+        <div class="sub" id="date-display-3"></div>
+      </div>
+
+      <div id="template-cards"></div>
+
+    </div>
+
   </div>
 
   <script>
@@ -573,6 +663,134 @@
       } catch {}
     }
 
+    // ── EMAIL STRATS ──────────────────────────────────────────────────────
+    const TEMPLATES = [
+      {
+        id: 'free-demo',
+        name: 'Free Demo',
+        subject: 'Quick question - [Company Name]',
+        body: `Hey [First Name], I'll keep this short.
+
+I'd love to build a free personalised ChatAero demo for [Clinic Name] — customised to your treatments and branding, so you can see exactly how it works before committing to anything.
+
+Worth a look?
+
+Alex Carver`,
+      },
+      {
+        id: 'pain-point',
+        name: 'Pain Point',
+        subject: 'Quick question - [Company Name]',
+        body: `Hey [First Name], something worth knowing.
+
+Around 35% of dental patient enquiries come in outside clinic hours — at night, weekends, when no one's there to respond. By the time someone gets back to them, they've already booked elsewhere.
+
+ChatAero's AI receptionist captures those enquiries instantly, 24/7. Happy to show you how it'd work for [Clinic Name] — no commitment.
+
+Worth 2 minutes?
+
+Alex Carver`,
+      },
+      {
+        id: 'curiosity',
+        name: 'Curiosity',
+        subject: 'Quick question - [Company Name]',
+        body: `Hey [First Name], one quick question.
+
+If a patient visited [Clinic Name]'s website at 9pm tonight and wanted to book a consultation, what happens?
+
+If the answer's nothing — that's exactly what ChatAero fixes. Happy to put together a quick personalised demo for [Clinic Name].
+
+Alex Carver`,
+      },
+    ];
+
+    let templateStats = TEMPLATES.map(t => load('tmpl_' + t.id, { sent: 0, opened: 0, replies: 0 }));
+    let accordionOpen = [false, false, false];
+
+    function renderTemplates() {
+      document.getElementById('date-display-3').textContent = formatDate(new Date());
+      const container = document.getElementById('template-cards');
+      container.innerHTML = '';
+
+      TEMPLATES.forEach((tmpl, i) => {
+        const stats = templateStats[i];
+        const rate = stats.sent > 0 ? Math.round((stats.opened / stats.sent) * 100) : 0;
+        const isOpen = accordionOpen[i];
+
+        const card = document.createElement('div');
+        card.className = 'card';
+        card.style.marginBottom = '14px';
+        card.innerHTML = `
+          <div class="card-label">${tmpl.name}</div>
+          <div class="template-stats-grid">
+            <div class="template-stat-box">
+              <div class="template-stat-val">${stats.sent}</div>
+              <div class="template-stat-label">Sent</div>
+            </div>
+            <div class="template-stat-box">
+              <div class="template-stat-val">${rate}%</div>
+              <div class="template-stat-label">Open Rate</div>
+            </div>
+            <div class="template-stat-box">
+              <div class="template-stat-val">${stats.replies}</div>
+              <div class="template-stat-label">Replies</div>
+            </div>
+          </div>
+          <div class="template-inputs">
+            <div class="template-input-wrap">
+              <div class="template-input-label">Sent</div>
+              <input class="template-input" type="number" min="0" inputmode="numeric" value="${stats.sent || ''}" data-tmpl="${i}" data-field="sent" placeholder="0" />
+            </div>
+            <div class="template-input-wrap">
+              <div class="template-input-label">Opened</div>
+              <input class="template-input" type="number" min="0" inputmode="numeric" value="${stats.opened || ''}" data-tmpl="${i}" data-field="opened" placeholder="0" />
+            </div>
+            <div class="template-input-wrap">
+              <div class="template-input-label">Replies</div>
+              <input class="template-input" type="number" min="0" inputmode="numeric" value="${stats.replies || ''}" data-tmpl="${i}" data-field="replies" placeholder="0" />
+            </div>
+          </div>
+          <div class="accordion-trigger${isOpen ? ' open' : ''}" data-acc="${i}">
+            <span class="accordion-subject">Subject: ${tmpl.subject}</span>
+            <span class="accordion-chevron">▼</span>
+          </div>
+          <div class="accordion-body${isOpen ? ' open' : ''}">
+            <div class="accordion-email">${tmpl.body}</div>
+          </div>
+        `;
+        container.appendChild(card);
+      });
+
+      // Bind inputs
+      container.querySelectorAll('.template-input').forEach(inp => {
+        inp.addEventListener('input', e => {
+          const i = parseInt(e.target.dataset.tmpl);
+          const field = e.target.dataset.field;
+          templateStats[i][field] = parseInt(e.target.value) || 0;
+          save('tmpl_' + TEMPLATES[i].id, templateStats[i]);
+          // Update display without full re-render
+          const card = e.target.closest('.card');
+          const s = templateStats[i];
+          const r = s.sent > 0 ? Math.round((s.opened / s.sent) * 100) : 0;
+          const vals = card.querySelectorAll('.template-stat-val');
+          vals[0].textContent = s.sent;
+          vals[1].textContent = r + '%';
+          vals[2].textContent = s.replies;
+        });
+      });
+
+      // Bind accordion toggles
+      container.querySelectorAll('.accordion-trigger').forEach(trigger => {
+        trigger.addEventListener('click', e => {
+          const i = parseInt(trigger.dataset.acc);
+          accordionOpen[i] = !accordionOpen[i];
+          trigger.classList.toggle('open', accordionOpen[i]);
+          trigger.nextElementSibling.classList.toggle('open', accordionOpen[i]);
+        });
+      });
+    }
+
     // ── SWIPE / SLIDE ─────────────────────────────────────────────────────
     let currentPage = 0;
     const slider = document.getElementById('slider');
@@ -582,6 +800,8 @@
       slider.style.transform = `translateX(-${page * 100}vw)`;
       document.getElementById('dot-0').className = 'dot' + (page === 0 ? ' active' : '');
       document.getElementById('dot-1').className = 'dot' + (page === 1 ? ' active' : '');
+      document.getElementById('dot-2').className = 'dot' + (page === 2 ? ' active' : '');
+      if (page === 2) renderTemplates();
     }
 
     // Touch swipe
@@ -608,14 +828,15 @@
       const dx = e.changedTouches[0].clientX - touchStartX;
       const dy = e.changedTouches[0].clientY - touchStartY;
       if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 40) {
-        if (dx < 0 && currentPage === 0) goTo(1);
-        else if (dx > 0 && currentPage === 1) goTo(0);
+        if (dx < 0 && currentPage < 2) goTo(currentPage + 1);
+        else if (dx > 0 && currentPage > 0) goTo(currentPage - 1);
       }
     }, { passive: true });
 
     // Dot clicks
     document.getElementById('dot-0').addEventListener('click', () => goTo(0));
     document.getElementById('dot-1').addEventListener('click', () => goTo(1));
+    document.getElementById('dot-2').addEventListener('click', () => goTo(2));
 
     // ── INIT ─────────────────────────────────────────────────────────────
     render();
