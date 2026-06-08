@@ -275,15 +275,54 @@ cron.schedule('0 18 * * *', () => {
 
 }, { timezone: 'Europe/London' });
 
-// ── ICON (generated purple square with checkmark) ─────────────────────
+// ── ICON — black background, purple CA (ChatAero brand style) ─────────
 function iconSvg(size) {
   const r = Math.round(size * 0.18);
-  const fontSize = Math.round(size * 0.42);
-  const y = Math.round(size * 0.62);
-  return `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">
-  <rect width="${size}" height="${size}" rx="${r}" fill="#080810"/>
-  <text x="${size/2}" y="${y}" text-anchor="middle" font-family="Arial Black, Arial, sans-serif"
-    font-size="${fontSize}" font-weight="900" fill="#7c3aed">adt</text>
+  const s = size;
+  const cx = s * 0.3;   // C centre x
+  const cy = s * 0.5;   // centre y
+  const ro = s * 0.26;  // outer radius
+  const ri = s * 0.15;  // inner radius
+  const gap = 28;       // opening angle (degrees each side from right)
+  const strokeW = ro - ri;
+  const mid = (ro + ri) / 2;
+  const gapRad = (gap * Math.PI) / 180;
+
+  // C arc path — open on the right
+  const x1 = cx + mid * Math.cos(gapRad);
+  const y1 = cy - mid * Math.sin(gapRad);
+  const x2 = cx + mid * Math.cos(-gapRad);
+  const y2 = cy - mid * Math.sin(-gapRad);
+
+  const cPath = `M ${x1.toFixed(1)} ${y1.toFixed(1)}
+    A ${mid.toFixed(1)} ${mid.toFixed(1)} 0 1 0 ${x2.toFixed(1)} ${y2.toFixed(1)}`;
+
+  // A — positioned so left leg aligns with C's opening
+  const ax = s * 0.62;  // A centre x
+  const aw = s * 0.28;  // half-width
+  const at = s * 0.18;  // top y
+  const ab = s * 0.82;  // bottom y
+  const barY = s * 0.60;
+  const barOff = aw * 0.35;
+  const legW = strokeW;
+
+  // Calculate bar intersection with legs
+  const t = (barY - ab) / (at - ab);
+  const leftBarX = ax - aw + (aw) * t * 2 * 0;
+  const leftX = ax - aw * ((barY - ab) / (at - ab));
+  const rightX = ax + aw * ((barY - ab) / (at - ab));
+
+  const aPath = `
+    M ${(ax - aw).toFixed(1)} ${ab.toFixed(1)}
+    L ${ax.toFixed(1)} ${at.toFixed(1)}
+    L ${(ax + aw).toFixed(1)} ${ab.toFixed(1)}
+    M ${leftX.toFixed(1)} ${barY.toFixed(1)}
+    L ${rightX.toFixed(1)} ${barY.toFixed(1)}`;
+
+  return `<svg xmlns="http://www.w3.org/2000/svg" width="${s}" height="${s}" viewBox="0 0 ${s} ${s}">
+  <rect width="${s}" height="${s}" rx="${r}" fill="#000000"/>
+  <path d="${cPath}" fill="none" stroke="#7c3aed" stroke-width="${strokeW.toFixed(1)}" stroke-linecap="round"/>
+  <path d="${aPath}" fill="none" stroke="#7c3aed" stroke-width="${strokeW.toFixed(1)}" stroke-linecap="round" stroke-linejoin="round"/>
 </svg>`;
 }
 

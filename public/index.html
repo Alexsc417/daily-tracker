@@ -3,11 +3,11 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Alex's Daily Tracker</title>
+  <title>aero</title>
   <link rel="manifest" href="/manifest.json" />
   <meta name="apple-mobile-web-app-capable" content="yes" />
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
-  <meta name="apple-mobile-web-app-title" content="Tracker" />
+  <meta name="apple-mobile-web-app-title" content="aero" />
   <link rel="apple-touch-icon" href="/icon-192.png" />
   <meta name="theme-color" content="#7c3aed" />
   <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
@@ -278,23 +278,6 @@
     .template-stat-val { font-size: 1.4rem; font-weight: 700; color: #a78bfa; line-height: 1; margin-bottom: 4px; }
     .template-stat-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
 
-    .template-inputs { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 14px; }
-    .template-input-wrap { display: flex; flex-direction: column; gap: 4px; }
-    .template-input-label { font-size: 0.65rem; color: #475569; font-weight: 500; text-transform: uppercase; letter-spacing: 0.05em; }
-    .template-input {
-      background: rgba(255,255,255,0.04);
-      border: 1px solid rgba(255,255,255,0.08);
-      border-radius: 8px;
-      color: #e2e8f0;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.85rem;
-      font-weight: 600;
-      padding: 9px 8px;
-      outline: none;
-      width: 100%;
-      text-align: center;
-    }
-    .template-input:focus { border-color: rgba(124,58,237,0.5); }
 
     /* ACCORDION */
     .accordion-trigger {
@@ -746,20 +729,6 @@ Alex Carver`,
               <div class="template-stat-label">Replies</div>
             </div>
           </div>
-          <div class="template-inputs">
-            <div class="template-input-wrap">
-              <div class="template-input-label">Sent</div>
-              <input class="template-input" type="number" min="0" inputmode="numeric" value="${stats.sent || ''}" data-tmpl="${i}" data-field="sent" placeholder="0" />
-            </div>
-            <div class="template-input-wrap">
-              <div class="template-input-label">Opened</div>
-              <input class="template-input" type="number" min="0" inputmode="numeric" value="${stats.opened || ''}" data-tmpl="${i}" data-field="opened" placeholder="0" />
-            </div>
-            <div class="template-input-wrap">
-              <div class="template-input-label">Replies</div>
-              <input class="template-input" type="number" min="0" inputmode="numeric" value="${stats.replies || ''}" data-tmpl="${i}" data-field="replies" placeholder="0" />
-            </div>
-          </div>
           <div class="accordion-trigger${isOpen ? ' open' : ''}" data-acc="${i}">
             <span class="accordion-subject">Subject: ${tmpl.subject}</span>
             <span class="accordion-chevron">▼</span>
@@ -769,24 +738,6 @@ Alex Carver`,
           </div>
         `;
         container.appendChild(card);
-      });
-
-      // Bind inputs
-      container.querySelectorAll('.template-input').forEach(inp => {
-        inp.addEventListener('input', e => {
-          const i = parseInt(e.target.dataset.tmpl);
-          const field = e.target.dataset.field;
-          templateStats[i][field] = parseInt(e.target.value) || 0;
-          save('tmpl_' + TEMPLATES[i].id, templateStats[i]);
-          // Update display without full re-render
-          const card = e.target.closest('.card');
-          const s = templateStats[i];
-          const r = s.sent > 0 ? Math.round((s.opened / s.sent) * 100) : 0;
-          const vals = card.querySelectorAll('.template-stat-val');
-          vals[0].textContent = s.sent;
-          vals[1].textContent = r + '%';
-          vals[2].textContent = s.replies;
-        });
       });
 
       // Bind accordion toggles

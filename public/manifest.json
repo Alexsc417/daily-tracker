@@ -1,10 +1,10 @@
 {
-  "name": "Alex's Daily Tracker",
-  "short_name": "Tracker",
-  "description": "Personal daily productivity tracker",
+  "name": "aero",
+  "short_name": "aero",
+  "description": "ChatAero business tracker",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#080810",
+  "background_color": "#000000",
   "theme_color": "#7c3aed",
   "orientation": "portrait",
   "icons": [
