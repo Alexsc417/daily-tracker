@@ -1113,10 +1113,11 @@ Alex Carver`,
     function unlockSpeech() {
       if (aeroSpeechUnlocked) return;
       aeroSpeechUnlocked = true;
-      const utt = new SpeechSynthesisUtterance('');
-      utt.volume = 0;
+      // Speak a silent utterance — do NOT cancel immediately, let iOS mark as unlocked
+      const utt = new SpeechSynthesisUtterance(' ');
+      utt.volume = 0.01;
+      utt.rate = 10; // finish almost instantly
       speechSynthesis.speak(utt);
-      speechSynthesis.cancel();
     }
 
     // ── Press and hold ────────────────────────────────────────────────────
@@ -1210,20 +1211,21 @@ Alex Carver`,
         const reply = data.response || 'Something went wrong — try again.';
         if (mode === 'voice') {
           setAeroState('speaking');
-          speechSynthesis.cancel(); // clear any stale queue
-          const speak = () => {
-            const utt = new SpeechSynthesisUtterance(reply);
-            const voice = getBestVoice();
-            if (voice) utt.voice = voice;
-            utt.lang = 'en-GB';
-            utt.rate = 0.95;
-            utt.pitch = 1.0;
-            utt.onend = () => setAeroState('idle');
-            utt.onerror = () => setAeroState('idle');
-            speechSynthesis.speak(utt);
+          // Cancel anything pending, then speak immediately — no voice selection,
+          // no getVoices() check, no voiceschanged (all unreliable on iOS PWA)
+          speechSynthesis.cancel();
+          const utt = new SpeechSynthesisUtterance(reply);
+          utt.lang = 'en-GB';
+          utt.rate = 0.95;
+          utt.pitch = 1.0;
+          utt.onend = () => setAeroState('idle');
+          utt.onerror = () => {
+            // Speech failed — show in chat as fallback
+            setAeroState('idle');
+            appendAeroMsg('aero', reply);
+            if (!aeroInChat) switchAeroToChat();
           };
-          if (speechSynthesis.getVoices().length) { speak(); }
-          else { speechSynthesis.addEventListener('voiceschanged', speak, { once: true }); }
+          speechSynthesis.speak(utt);
         } else {
           appendAeroMsg('aero', reply);
           setAeroState('idle');
