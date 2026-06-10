@@ -1155,39 +1155,41 @@ Alex Carver`,
         }
       };
       aeroRecognition.onerror = () => { aeroRecognition = null; setAeroState('idle'); };
-      aeroRecognition.onend = () => {
-        // Fired after stop() — combine final + any remaining interim
-        const msg = (aeroFinalTranscript + aeroTranscript).trim();
-        aeroRecognition = null;
-        if (!msg) { setAeroState('idle'); return; }
-        sendToAero(msg, 'voice');
-      };
+      // onend is a safety fallback only — release captures transcript directly
+      aeroRecognition.onend = () => { aeroRecognition = null; };
       aeroRecognition.start();
       setAeroState('listening');
     }
 
     function releaseAeroListening() {
+      // Capture transcript NOW — don't wait for onend (unreliable on iOS)
+      const msg = (aeroFinalTranscript + aeroTranscript).trim();
       if (aeroRecognition) {
-        aeroRecognition.stop(); // triggers onend which handles sending
-      } else {
-        setAeroState('idle');
+        aeroRecognition.onend = null; // prevent any double-fire
+        try { aeroRecognition.stop(); } catch {}
+        aeroRecognition = null;
       }
+      if (!msg) { setAeroState('idle'); return; }
+      sendToAero(msg, 'voice');
     }
 
     async function sendToAero(message, mode) {
       setAeroState('processing');
       if (mode === 'chat') appendAeroMsg('user', message);
+      const controller = new AbortController();
+      const timeout = setTimeout(() => controller.abort(), 20000);
       try {
         const res = await fetch('/api/aero', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ message }),
+          signal: controller.signal,
         });
+        clearTimeout(timeout);
         const data = await res.json();
         const reply = data.response || 'Something went wrong — try again.';
         if (mode === 'voice') {
           setAeroState('speaking');
-          // Ensure voices are loaded
           const speak = () => {
             const utt = new SpeechSynthesisUtterance(reply);
             const voice = getBestVoice();
@@ -1204,9 +1206,10 @@ Alex Carver`,
           appendAeroMsg('aero', reply);
           setAeroState('idle');
         }
-      } catch {
+      } catch (err) {
+        clearTimeout(timeout);
         setAeroState('idle');
-        if (mode === 'chat') appendAeroMsg('aero', 'Something went wrong. Try again.');
+        if (mode === 'chat') appendAeroMsg('aero', err.name === 'AbortError' ? 'Timed out — try again.' : 'Something went wrong. Try again.');
       }
     }
 
