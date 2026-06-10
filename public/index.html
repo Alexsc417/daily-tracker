@@ -357,14 +357,25 @@
       -webkit-tap-highlight-color: transparent;
       border-radius: 50%;
       user-select: none;
+      touch-action: none;
     }
     .aero-label {
       font-size: 0.62rem;
       font-weight: 700;
       letter-spacing: 0.2em;
       color: #a78bfa;
-      margin-top: 10px;
       text-transform: uppercase;
+      padding: 6px 0;
+    }
+    .aero-label-btn {
+      cursor: pointer;
+      -webkit-tap-highlight-color: transparent;
+    }
+    .aero-state-label {
+      font-size: 0.73rem;
+      color: #475569;
+      margin-top: 6px;
+      text-align: center;
     }
     .aero-chat-panel {
       display: none;
@@ -385,27 +396,8 @@
     .aero-chat-header {
       display: flex;
       align-items: center;
-      justify-content: flex-start;
+      justify-content: center;
       margin-bottom: 10px;
-      position: relative;
-    }
-    .aero-chat-title {
-      font-size: 0.68rem;
-      font-weight: 700;
-      letter-spacing: 0.15em;
-      color: #a78bfa;
-      text-transform: uppercase;
-      margin-left: 8px;
-    }
-    .aero-back-btn {
-      background: none;
-      border: none;
-      color: #a78bfa;
-      font-size: 1.2rem;
-      padding: 4px 8px 4px 0;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-      line-height: 1;
     }
     .aero-messages {
       flex: 1;
@@ -607,13 +599,13 @@
       <!-- AERO -->
       <div class="aero-section" id="aero-section">
         <div class="aero-orb-panel" id="aero-orb-panel">
+          <div class="aero-label aero-label-btn" id="aero-to-chat-btn">AERO</div>
           <canvas id="aero-canvas" width="260" height="260"></canvas>
-          <div class="aero-label">AERO</div>
+          <div class="aero-state-label" id="aero-state-label">Hold to speak</div>
         </div>
         <div class="aero-chat-panel" id="aero-chat-panel">
           <div class="aero-chat-header">
-            <button class="aero-back-btn" id="aero-back-btn">←</button>
-            <span class="aero-chat-title">Aero</span>
+            <div class="aero-label aero-label-btn" id="aero-to-orb-btn">AERO</div>
           </div>
           <div class="aero-messages" id="aero-messages"></div>
           <div class="aero-input-bar">
@@ -1097,9 +1089,13 @@ Alex Carver`,
       })();
     }
 
+    const AERO_STATE_LABELS = { idle: 'Hold to speak', listening: 'Listening...', processing: 'Thinking...', speaking: 'Replying...' };
+
     function setAeroState(s) {
       aeroState = s;
       if (aeroParticles) aeroParticles.material.color.setHex(AERO_COLORS[s]);
+      const lbl = document.getElementById('aero-state-label');
+      if (lbl) lbl.textContent = AERO_STATE_LABELS[s] || '';
     }
 
     // ── Voice selection ───────────────────────────────────────────────────
@@ -1114,18 +1110,27 @@ Alex Carver`,
 
     // ── Press and hold ────────────────────────────────────────────────────
     const aeroCanvas = document.getElementById('aero-canvas');
+    let aeroAutoReleaseTimer = null;
 
     function onAeroHoldStart(e) {
       e.preventDefault();
+      e.stopPropagation();
       if (aeroState !== 'idle') return;
       aeroHolding = true;
       startAeroListening();
+      // Safety auto-release after 15s in case touchend doesn't fire
+      clearTimeout(aeroAutoReleaseTimer);
+      aeroAutoReleaseTimer = setTimeout(() => {
+        if (aeroHolding) { aeroHolding = false; releaseAeroListening(); }
+      }, 15000);
     }
 
     function onAeroHoldEnd(e) {
-      e.preventDefault();
       if (!aeroHolding) return;
+      e.preventDefault();
+      e.stopPropagation();
       aeroHolding = false;
+      clearTimeout(aeroAutoReleaseTimer);
       if (aeroState === 'listening') releaseAeroListening();
     }
 
@@ -1135,6 +1140,9 @@ Alex Carver`,
     aeroCanvas.addEventListener('touchstart', onAeroHoldStart, { passive: false });
     aeroCanvas.addEventListener('touchend', onAeroHoldEnd, { passive: false });
     aeroCanvas.addEventListener('touchcancel', onAeroHoldEnd, { passive: false });
+    // Document-level fallback — catches touchend even if canvas loses the touch
+    document.addEventListener('touchend', e => { if (aeroHolding) onAeroHoldEnd(e); }, { passive: false });
+    document.addEventListener('mouseup', e => { if (aeroHolding) onAeroHoldEnd(e); });
 
     function startAeroListening() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
@@ -1268,7 +1276,8 @@ Alex Carver`,
       }, 350);
     }
 
-    document.getElementById('aero-back-btn').addEventListener('click', switchAeroToVoice);
+    document.getElementById('aero-to-chat-btn').addEventListener('click', switchAeroToChat);
+    document.getElementById('aero-to-orb-btn').addEventListener('click', switchAeroToVoice);
 
     document.getElementById('aero-send').addEventListener('click', () => {
       const input = document.getElementById('aero-input');
