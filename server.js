@@ -275,6 +275,70 @@ cron.schedule('0 18 * * *', () => {
 
 }, { timezone: 'Europe/London' });
 
+// ── AERO AI ASSISTANT ────────────────────────────────────────────────
+app.post('/api/aero', async (req, res) => {
+  const { message } = req.body;
+  if (!message) return res.status(400).json({ error: 'No message' });
+
+  const stats = outreachStats;
+  const openRate = stats.alltime.sent > 0
+    ? Math.round((stats.alltime.opened / stats.alltime.sent) * 100)
+    : 0;
+
+  const systemPrompt = `You are Aero, the AI assistant for ChatAero.ai and Alex Carver's personal business tracker. Keep all responses short and direct — 2-3 sentences max. You are a business assistant, not a conversational chatbot.
+
+BUSINESS CONTEXT:
+- ChatAero.ai is an AI receptionist SaaS for UK private dental clinics
+- Pricing: Basic £99/mo + £99 setup, Plus £249/mo (most popular, free setup), Pro £499/mo (free setup)
+- ICP: UK private dental clinic owners, 1-10 staff, no existing chatbot, not NHS
+- Alex is a 17-year-old solo founder, Salisbury, bootstrapped, no team
+- Product live at chataero.ai — still looking for first paying client
+
+EMAIL OUTREACH:
+- Subject line: 'Quick question - [Company Name]' — 43% open rate. Do NOT suggest changing it.
+- Personalisation: 'saw you owned' = owner/practice owner. 'saw you co-founded' = co-founder. 'saw you ran' = clinical director/principal/managing director.
+- Template A (Free Demo): free personalised demo customised to treatments and branding.
+- Template B (Pain Point): 35% of dental enquiries outside hours — patients book elsewhere. ChatAero captures them instantly.
+- Template C (Curiosity): what happens if a patient visits at 9pm wanting to book? That's what ChatAero fixes.
+- Send schedule: Tue/Wed/Thu — 30 cold emails 8:30–9:30am, 30 follow-ups 1–2pm, 2-min gaps in Mailmeteor.
+- Lead source: Apollo.io free plan — verified emails, UK only, dental clinic decision makers.
+
+LIVE OUTREACH STATS:
+- All time: ${stats.alltime.sent} sent, ${stats.alltime.opened} opened, ${openRate}% open rate, ${stats.alltime.replies} replies
+- This week: ${stats.weekly.sent} sent, ${stats.weekly.opened} opened, ${stats.weekly.replies} replies
+- Template A (Free Demo): ${stats.templates['free-demo'].sent} sent, ${stats.templates['free-demo'].replies} replies
+- Template B (Pain Point): ${stats.templates['pain-point'].sent} sent, ${stats.templates['pain-point'].replies} replies
+- Template C (Curiosity): ${stats.templates['curiosity'].sent} sent, ${stats.templates['curiosity'].replies} replies
+
+When asked about performance, give actionable advice based on the actual numbers. If open rate is strong but replies are low, the issue is the email body not the subject line.`;
+
+  const apiKey = process.env.CLAUDE_API_KEY || process.env.ANTHROPIC_API_KEY;
+  if (!apiKey) return res.status(500).json({ error: 'No API key configured — add CLAUDE_API_KEY to Railway env vars' });
+
+  try {
+    const response = await fetch('https://api.anthropic.com/v1/messages', {
+      method: 'POST',
+      headers: {
+        'x-api-key': apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: 'claude-haiku-4-5-20251001',
+        max_tokens: 300,
+        system: systemPrompt,
+        messages: [{ role: 'user', content: message }],
+      }),
+    });
+    const data = await response.json();
+    if (data.error) return res.status(500).json({ error: data.error.message });
+    res.json({ response: data.content[0].text });
+  } catch (err) {
+    console.error('Aero API error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
+
 // ── ICON — black background, bubbly purple CA ────────────────────────
 function iconSvg(size) {
   const r = Math.round(size * 0.22);
