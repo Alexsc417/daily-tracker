@@ -1196,7 +1196,7 @@ Alex Carver`,
 
     async function sendToAero(message, mode) {
       setAeroState('processing');
-      if (mode === 'chat') appendAeroMsg('user', message);
+      appendAeroMsg('user', message); // always log — voice and chat both show in transcript
       const controller = new AbortController();
       const timeout = setTimeout(() => controller.abort(), 20000);
       try {
