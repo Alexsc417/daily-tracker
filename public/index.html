@@ -336,18 +336,27 @@
       display: flex;
       flex-direction: column;
       align-items: center;
+      overflow: hidden;
+      position: relative;
     }
     .aero-orb-panel {
       display: flex;
       flex-direction: column;
       align-items: center;
       width: 100%;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease;
+    }
+    .aero-orb-panel.slide-out {
+      transform: translateY(-40px);
+      opacity: 0;
+      pointer-events: none;
     }
     #aero-canvas {
       cursor: pointer;
       display: block;
       -webkit-tap-highlight-color: transparent;
       border-radius: 50%;
+      user-select: none;
     }
     .aero-label {
       font-size: 0.62rem;
@@ -357,35 +366,28 @@
       margin-top: 10px;
       text-transform: uppercase;
     }
-    .aero-state-label {
-      font-size: 0.73rem;
-      color: #475569;
-      margin-top: 4px;
-    }
-    .aero-mode-toggle {
-      margin-top: 14px;
-      background: rgba(124,58,237,0.1);
-      border: 1px solid rgba(124,58,237,0.22);
-      border-radius: 8px;
-      color: #a78bfa;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.78rem;
-      font-weight: 600;
-      padding: 8px 22px;
-      cursor: pointer;
-      -webkit-tap-highlight-color: transparent;
-    }
     .aero-chat-panel {
       display: none;
       flex-direction: column;
       width: 100%;
       height: 360px;
+      transition: transform 0.35s cubic-bezier(0.4,0,0.2,1), opacity 0.35s ease;
+    }
+    .aero-chat-panel.slide-in {
+      display: flex;
+      transform: translateY(0);
+      opacity: 1;
+    }
+    .aero-chat-panel.slide-from-below {
+      transform: translateY(40px);
+      opacity: 0;
     }
     .aero-chat-header {
       display: flex;
       align-items: center;
-      justify-content: space-between;
+      justify-content: flex-start;
       margin-bottom: 10px;
+      position: relative;
     }
     .aero-chat-title {
       font-size: 0.68rem;
@@ -393,18 +395,17 @@
       letter-spacing: 0.15em;
       color: #a78bfa;
       text-transform: uppercase;
+      margin-left: 8px;
     }
-    .aero-voice-btn {
-      background: rgba(124,58,237,0.1);
-      border: 1px solid rgba(124,58,237,0.22);
-      border-radius: 7px;
+    .aero-back-btn {
+      background: none;
+      border: none;
       color: #a78bfa;
-      font-family: 'Space Grotesk', sans-serif;
-      font-size: 0.73rem;
-      font-weight: 600;
-      padding: 5px 12px;
+      font-size: 1.2rem;
+      padding: 4px 8px 4px 0;
       cursor: pointer;
       -webkit-tap-highlight-color: transparent;
+      line-height: 1;
     }
     .aero-messages {
       flex: 1;
@@ -604,17 +605,15 @@
       </div>
 
       <!-- AERO -->
-      <div class="aero-section">
+      <div class="aero-section" id="aero-section">
         <div class="aero-orb-panel" id="aero-orb-panel">
-          <canvas id="aero-canvas" width="200" height="200"></canvas>
+          <canvas id="aero-canvas" width="260" height="260"></canvas>
           <div class="aero-label">AERO</div>
-          <div class="aero-state-label" id="aero-state-label">Press to speak</div>
-          <button class="aero-mode-toggle" id="aero-chat-toggle">Chat</button>
         </div>
         <div class="aero-chat-panel" id="aero-chat-panel">
           <div class="aero-chat-header">
+            <button class="aero-back-btn" id="aero-back-btn">←</button>
             <span class="aero-chat-title">Aero</span>
-            <button class="aero-voice-btn" id="aero-voice-toggle">↩ Voice</button>
           </div>
           <div class="aero-messages" id="aero-messages"></div>
           <div class="aero-input-bar">
@@ -1025,32 +1024,42 @@ Alex Carver`,
 
     // ── AERO ──────────────────────────────────────────────────────────────
     const AERO_COLORS = { idle: 0x7c3aed, listening: 0xa78bfa, processing: 0x9333ea, speaking: 0xc4b5fd };
-    const AERO_LABELS = { idle: 'Press to speak', listening: 'Listening...', processing: 'Thinking...', speaking: 'Speaking...' };
 
     let aeroState = 'idle';
     let aeroTime = 0;
     let aeroRecognition = null;
     let aeroTranscript = '';
+    let aeroFinalTranscript = '';
     let aeroScene, aeroCamera, aeroRenderer, aeroParticles, aeroBasePos;
+    let aeroHolding = false;
+
+    // ── Orb size: 85% of container width ─────────────────────────────────
+    function getAeroSize() {
+      const section = document.getElementById('aero-section');
+      const w = section ? Math.floor(section.clientWidth * 0.85) : 260;
+      return Math.min(w, 340);
+    }
 
     function initAeroOrb() {
       if (!window.THREE) return;
       const canvas = document.getElementById('aero-canvas');
-      const W = 200, H = 200;
+      const S = getAeroSize();
+      canvas.width = S; canvas.height = S;
+      canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
 
       aeroScene = new THREE.Scene();
-      aeroCamera = new THREE.PerspectiveCamera(60, W / H, 0.1, 100);
+      aeroCamera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
       aeroCamera.position.z = 3.4;
 
       aeroRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
-      aeroRenderer.setSize(W, H);
+      aeroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      aeroRenderer.setSize(S, S);
       aeroRenderer.setClearColor(0x000000, 0);
 
-      const N = 700;
+      const N = 750;
       const pos = new Float32Array(N * 3);
       aeroBasePos = new Float32Array(N * 3);
       const phi = Math.PI * (3 - Math.sqrt(5));
-
       for (let i = 0; i < N; i++) {
         const y = 1 - (i / (N - 1)) * 2;
         const r = Math.sqrt(1 - y * y);
@@ -1074,10 +1083,10 @@ Alex Carver`,
         for (let i = 0, N = p.count; i < N; i++) {
           const bx = aeroBasePos[i*3], by = aeroBasePos[i*3+1], bz = aeroBasePos[i*3+2];
           let s = 1;
-          if (aeroState === 'idle')       s = 1 + 0.025 * Math.sin(aeroTime * 0.9 + i * 0.01);
-          else if (aeroState === 'listening')  s = 1 + 0.14 * Math.sin(aeroTime * 2.8 + i * 0.05);
+          if (aeroState === 'idle')            s = 1 + 0.025 * Math.sin(aeroTime * 0.9 + i * 0.01);
+          else if (aeroState === 'listening')  s = 1 + 0.14  * Math.sin(aeroTime * 2.8 + i * 0.05);
           else if (aeroState === 'processing') s = 0.82 + 0.06 * Math.sin(aeroTime * 5 + i * 0.03);
-          else if (aeroState === 'speaking')   s = 1 + 0.09 * Math.sin(aeroTime * 5.5 + by * 9);
+          else if (aeroState === 'speaking')   s = 1 + 0.09  * Math.sin(aeroTime * 5.5 + by * 9);
           p.array[i*3] = bx*s; p.array[i*3+1] = by*s; p.array[i*3+2] = bz*s;
         }
         p.needsUpdate = true;
@@ -1090,42 +1099,79 @@ Alex Carver`,
 
     function setAeroState(s) {
       aeroState = s;
-      document.getElementById('aero-state-label').textContent = AERO_LABELS[s];
       if (aeroParticles) aeroParticles.material.color.setHex(AERO_COLORS[s]);
     }
 
-    // Orb tap — toggle listen/send
-    document.getElementById('aero-canvas').addEventListener('click', () => {
-      if (aeroState === 'idle') startAeroListening();
-      else if (aeroState === 'listening') stopAeroListening();
-    });
+    // ── Voice selection ───────────────────────────────────────────────────
+    function getBestVoice() {
+      const voices = speechSynthesis.getVoices();
+      return voices.find(v => /google/i.test(v.name))
+        || voices.find(v => /natural|neural/i.test(v.name))
+        || voices.find(v => v.lang === 'en-GB')
+        || voices.find(v => v.lang.startsWith('en'))
+        || null;
+    }
+
+    // ── Press and hold ────────────────────────────────────────────────────
+    const aeroCanvas = document.getElementById('aero-canvas');
+
+    function onAeroHoldStart(e) {
+      e.preventDefault();
+      if (aeroState !== 'idle') return;
+      aeroHolding = true;
+      startAeroListening();
+    }
+
+    function onAeroHoldEnd(e) {
+      e.preventDefault();
+      if (!aeroHolding) return;
+      aeroHolding = false;
+      if (aeroState === 'listening') releaseAeroListening();
+    }
+
+    aeroCanvas.addEventListener('mousedown', onAeroHoldStart);
+    aeroCanvas.addEventListener('mouseup', onAeroHoldEnd);
+    aeroCanvas.addEventListener('mouseleave', onAeroHoldEnd);
+    aeroCanvas.addEventListener('touchstart', onAeroHoldStart, { passive: false });
+    aeroCanvas.addEventListener('touchend', onAeroHoldEnd, { passive: false });
+    aeroCanvas.addEventListener('touchcancel', onAeroHoldEnd, { passive: false });
 
     function startAeroListening() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) { switchAeroToChat(); return; }
+      aeroTranscript = '';
+      aeroFinalTranscript = '';
       aeroRecognition = new SR();
       aeroRecognition.continuous = true;
       aeroRecognition.interimResults = true;
       aeroRecognition.lang = 'en-GB';
-      aeroTranscript = '';
       aeroRecognition.onresult = e => {
-        let final = '';
         for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) final += e.results[i][0].transcript;
+          if (e.results[i].isFinal) {
+            aeroFinalTranscript += e.results[i][0].transcript + ' ';
+          } else {
+            aeroTranscript = e.results[i][0].transcript;
+          }
         }
-        if (final) aeroTranscript += final;
       };
-      aeroRecognition.onerror = () => setAeroState('idle');
+      aeroRecognition.onerror = () => { aeroRecognition = null; setAeroState('idle'); };
+      aeroRecognition.onend = () => {
+        // Fired after stop() — combine final + any remaining interim
+        const msg = (aeroFinalTranscript + aeroTranscript).trim();
+        aeroRecognition = null;
+        if (!msg) { setAeroState('idle'); return; }
+        sendToAero(msg, 'voice');
+      };
       aeroRecognition.start();
       setAeroState('listening');
     }
 
-    function stopAeroListening() {
-      if (aeroRecognition) { aeroRecognition.stop(); aeroRecognition = null; }
-      const msg = aeroTranscript.trim();
-      aeroTranscript = '';
-      if (!msg) { setAeroState('idle'); return; }
-      sendToAero(msg, 'voice');
+    function releaseAeroListening() {
+      if (aeroRecognition) {
+        aeroRecognition.stop(); // triggers onend which handles sending
+      } else {
+        setAeroState('idle');
+      }
     }
 
     async function sendToAero(message, mode) {
@@ -1141,11 +1187,19 @@ Alex Carver`,
         const reply = data.response || 'Something went wrong — try again.';
         if (mode === 'voice') {
           setAeroState('speaking');
-          const utt = new SpeechSynthesisUtterance(reply);
-          utt.lang = 'en-GB';
-          utt.rate = 1.0;
-          utt.onend = () => setAeroState('idle');
-          speechSynthesis.speak(utt);
+          // Ensure voices are loaded
+          const speak = () => {
+            const utt = new SpeechSynthesisUtterance(reply);
+            const voice = getBestVoice();
+            if (voice) utt.voice = voice;
+            utt.lang = 'en-GB';
+            utt.rate = 0.95;
+            utt.pitch = 1.0;
+            utt.onend = () => setAeroState('idle');
+            speechSynthesis.speak(utt);
+          };
+          if (speechSynthesis.getVoices().length) { speak(); }
+          else { speechSynthesis.addEventListener('voiceschanged', speak, { once: true }); }
         } else {
           appendAeroMsg('aero', reply);
           setAeroState('idle');
@@ -1165,18 +1219,53 @@ Alex Carver`,
       msgs.scrollTop = msgs.scrollHeight;
     }
 
+    // ── Swipe to switch modes ─────────────────────────────────────────────
+    let aeroSwipeStartY = 0;
+    let aeroInChat = false;
+
+    const aeroSection = document.getElementById('aero-section');
+    aeroSection.addEventListener('touchstart', e => { aeroSwipeStartY = e.touches[0].clientY; }, { passive: true });
+    aeroSection.addEventListener('touchend', e => {
+      const dy = aeroSwipeStartY - e.changedTouches[0].clientY;
+      if (!aeroInChat && dy > 50) switchAeroToChat();       // swipe up on orb → chat
+      else if (aeroInChat && dy < -50) switchAeroToVoice(); // swipe down on chat → orb
+    }, { passive: true });
+
     function switchAeroToChat() {
-      document.getElementById('aero-orb-panel').style.display = 'none';
-      document.getElementById('aero-chat-panel').style.display = 'flex';
+      if (aeroInChat) return;
+      aeroInChat = true;
+      const orb = document.getElementById('aero-orb-panel');
+      const chat = document.getElementById('aero-chat-panel');
+      orb.classList.add('slide-out');
+      chat.style.display = 'flex';
+      chat.classList.add('slide-from-below');
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => {
+          chat.classList.remove('slide-from-below');
+          chat.classList.add('slide-in');
+        });
+      });
+      setTimeout(() => { orb.style.display = 'none'; orb.classList.remove('slide-out'); }, 350);
     }
 
     function switchAeroToVoice() {
-      document.getElementById('aero-chat-panel').style.display = 'none';
-      document.getElementById('aero-orb-panel').style.display = 'flex';
+      if (!aeroInChat) return;
+      aeroInChat = false;
+      const orb = document.getElementById('aero-orb-panel');
+      const chat = document.getElementById('aero-chat-panel');
+      orb.style.display = 'flex';
+      requestAnimationFrame(() => {
+        requestAnimationFrame(() => { orb.classList.remove('slide-out'); });
+      });
+      chat.classList.remove('slide-in');
+      chat.classList.add('slide-from-below');
+      setTimeout(() => {
+        chat.style.display = 'none';
+        chat.classList.remove('slide-from-below');
+      }, 350);
     }
 
-    document.getElementById('aero-chat-toggle').addEventListener('click', switchAeroToChat);
-    document.getElementById('aero-voice-toggle').addEventListener('click', switchAeroToVoice);
+    document.getElementById('aero-back-btn').addEventListener('click', switchAeroToVoice);
 
     document.getElementById('aero-send').addEventListener('click', () => {
       const input = document.getElementById('aero-input');
