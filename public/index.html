@@ -1211,19 +1211,26 @@ Alex Carver`,
         const reply = data.response || 'Something went wrong — try again.';
         if (mode === 'voice') {
           setAeroState('speaking');
-          // Always show reply as text — switch to chat so user gets the answer
-          // regardless of whether speech works
-          appendAeroMsg('aero', reply);
-          if (!aeroInChat) switchAeroToChat();
-          // Attempt speech in parallel
+          appendAeroMsg('aero', reply); // silently log to chat for reference
+          // Try speech — stay on orb, don't redirect to chat
           speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(reply);
           utt.lang = 'en-GB';
           utt.rate = 0.95;
           utt.pitch = 1.0;
-          const speechTimeout = setTimeout(() => setAeroState('idle'), 15000);
+          const speechTimeout = setTimeout(() => {
+            // Speech silently failed — reset orb and show hint
+            setAeroState('idle');
+            const lbl = document.getElementById('aero-state-label');
+            if (lbl) { lbl.textContent = 'Tap AERO to read reply'; setTimeout(() => { lbl.textContent = 'Hold to speak'; }, 4000); }
+          }, 12000);
           utt.onend = () => { clearTimeout(speechTimeout); setAeroState('idle'); };
-          utt.onerror = () => { clearTimeout(speechTimeout); setAeroState('idle'); };
+          utt.onerror = () => {
+            clearTimeout(speechTimeout);
+            setAeroState('idle');
+            const lbl = document.getElementById('aero-state-label');
+            if (lbl) { lbl.textContent = 'Tap AERO to read reply'; setTimeout(() => { lbl.textContent = 'Hold to speak'; }, 4000); }
+          };
           speechSynthesis.speak(utt);
         } else {
           appendAeroMsg('aero', reply);
