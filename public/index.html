@@ -1223,7 +1223,7 @@ Alex Carver`,
         const data = await res.json();
         const reply = data.response || 'Something went wrong — try again.';
         appendAeroMsg('aero', reply); // always log to chat transcript
-        if (data.audioError) appendAeroMsg('aero', '⚠️ Audio error: ' + data.audioError);
+        if (data.audioError) console.warn('Audio error:', data.audioError);
         if (mode === 'voice' && data.audio) {
           setAeroState('speaking');
           try {
