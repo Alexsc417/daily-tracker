@@ -339,6 +339,7 @@ When asked about performance, give actionable advice based on the actual numbers
     const voiceId   = process.env.ELEVENLABS_VOICE_ID;
     let audioBase64 = null;
 
+    let audioError = null;
     if (elevenKey && voiceId) {
       try {
         const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
@@ -357,14 +358,18 @@ When asked about performance, give actionable advice based on the actual numbers
           const arrayBuf = await ttsRes.arrayBuffer();
           audioBase64 = Buffer.from(arrayBuf).toString('base64');
         } else {
-          console.error('ElevenLabs error:', ttsRes.status, await ttsRes.text());
+          audioError = `ElevenLabs ${ttsRes.status}: ${await ttsRes.text()}`;
+          console.error('ElevenLabs error:', audioError);
         }
       } catch (ttsErr) {
+        audioError = ttsErr.message;
         console.error('ElevenLabs TTS failed:', ttsErr.message);
       }
+    } else {
+      audioError = `Missing env vars — ELEVENLABS_API_KEY: ${!!elevenKey}, ELEVENLABS_VOICE_ID: ${!!voiceId}`;
     }
 
-    res.json({ response: responseText, audio: audioBase64 });
+    res.json({ response: responseText, audio: audioBase64, audioError });
   } catch (err) {
     console.error('Aero API error:', err);
     res.status(500).json({ error: err.message });
