@@ -332,7 +332,39 @@ When asked about performance, give actionable advice based on the actual numbers
     });
     const data = await response.json();
     if (data.error) return res.status(500).json({ error: data.error.message });
-    res.json({ response: data.content[0].text });
+    const responseText = data.content[0].text;
+
+    // ── ElevenLabs TTS ──────────────────────────────────────────────────
+    const elevenKey = process.env.ELEVENLABS_API_KEY;
+    const voiceId   = process.env.ELEVENLABS_VOICE_ID;
+    let audioBase64 = null;
+
+    if (elevenKey && voiceId) {
+      try {
+        const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+          method: 'POST',
+          headers: {
+            'xi-api-key': elevenKey,
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            text: responseText,
+            model_id: 'eleven_turbo_v2',
+            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+          }),
+        });
+        if (ttsRes.ok) {
+          const arrayBuf = await ttsRes.arrayBuffer();
+          audioBase64 = Buffer.from(arrayBuf).toString('base64');
+        } else {
+          console.error('ElevenLabs error:', ttsRes.status, await ttsRes.text());
+        }
+      } catch (ttsErr) {
+        console.error('ElevenLabs TTS failed:', ttsErr.message);
+      }
+    }
+
+    res.json({ response: responseText, audio: audioBase64 });
   } catch (err) {
     console.error('Aero API error:', err);
     res.status(500).json({ error: err.message });

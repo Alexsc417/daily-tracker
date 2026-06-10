@@ -1098,26 +1098,39 @@ Alex Carver`,
       if (lbl) lbl.textContent = AERO_STATE_LABELS[s] || '';
     }
 
-    // ── Voice selection ───────────────────────────────────────────────────
-    function getBestVoice() {
-      const voices = speechSynthesis.getVoices();
-      return voices.find(v => /google/i.test(v.name))
-        || voices.find(v => /natural|neural/i.test(v.name))
-        || voices.find(v => v.lang === 'en-GB')
-        || voices.find(v => v.lang.startsWith('en'))
-        || null;
+    // ── Web Audio playback (replaces SpeechSynthesis entirely) ───────────
+    let aeroAudioCtx = null;
+    function getAudioCtx() {
+      if (!aeroAudioCtx || aeroAudioCtx.state === 'closed') {
+        aeroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
+      }
+      return aeroAudioCtx;
     }
 
-    // ── Unlock SpeechSynthesis on first gesture (iOS requirement) ─────────
-    let aeroSpeechUnlocked = false;
-    function unlockSpeech() {
-      if (aeroSpeechUnlocked) return;
-      aeroSpeechUnlocked = true;
-      // Speak a silent utterance — do NOT cancel immediately, let iOS mark as unlocked
-      const utt = new SpeechSynthesisUtterance(' ');
-      utt.volume = 0.01;
-      utt.rate = 10; // finish almost instantly
-      speechSynthesis.speak(utt);
+    async function playAudioBase64(base64) {
+      const ctx = getAudioCtx();
+      // iOS requires resume() after user gesture
+      if (ctx.state === 'suspended') await ctx.resume();
+      const binary = atob(base64);
+      const bytes = new Uint8Array(binary.length);
+      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
+      const audioBuf = await ctx.decodeAudioData(bytes.buffer);
+      return new Promise((resolve) => {
+        const source = ctx.createBufferSource();
+        source.buffer = audioBuf;
+        source.connect(ctx.destination);
+        source.onended = resolve;
+        source.start(0);
+      });
+    }
+
+    // Unlock AudioContext on first gesture (iOS requirement)
+    let aeroAudioUnlocked = false;
+    function unlockAudio() {
+      if (aeroAudioUnlocked) return;
+      aeroAudioUnlocked = true;
+      const ctx = getAudioCtx();
+      if (ctx.state === 'suspended') ctx.resume();
     }
 
     // ── Press and hold ────────────────────────────────────────────────────
@@ -1127,7 +1140,7 @@ Alex Carver`,
     function onAeroHoldStart(e) {
       e.preventDefault();
       e.stopPropagation();
-      unlockSpeech(); // unlock on gesture while still in user gesture stack
+      unlockAudio(); // unlock AudioContext while still in user gesture stack
       if (aeroState !== 'idle') return;
       aeroHolding = true;
       startAeroListening();
@@ -1209,32 +1222,24 @@ Alex Carver`,
         clearTimeout(timeout);
         const data = await res.json();
         const reply = data.response || 'Something went wrong — try again.';
-        if (mode === 'voice') {
+        appendAeroMsg('aero', reply); // always log to chat transcript
+        if (mode === 'voice' && data.audio) {
           setAeroState('speaking');
-          appendAeroMsg('aero', reply); // silently log to chat for reference
-          // Try speech — stay on orb, don't redirect to chat
-          speechSynthesis.cancel();
-          const utt = new SpeechSynthesisUtterance(reply);
-          utt.lang = 'en-GB';
-          utt.rate = 0.95;
-          utt.pitch = 1.0;
-          const speechTimeout = setTimeout(() => {
-            // Speech silently failed — reset orb and show hint
-            setAeroState('idle');
+          try {
+            await playAudioBase64(data.audio);
+          } catch (audioErr) {
+            console.warn('Audio playback failed:', audioErr);
             const lbl = document.getElementById('aero-state-label');
             if (lbl) { lbl.textContent = 'Tap AERO to read reply'; setTimeout(() => { lbl.textContent = 'Hold to speak'; }, 4000); }
-          }, 12000);
-          utt.onend = () => { clearTimeout(speechTimeout); setAeroState('idle'); };
-          utt.onerror = () => {
-            clearTimeout(speechTimeout);
-            setAeroState('idle');
-            const lbl = document.getElementById('aero-state-label');
-            if (lbl) { lbl.textContent = 'Tap AERO to read reply'; setTimeout(() => { lbl.textContent = 'Hold to speak'; }, 4000); }
-          };
-          speechSynthesis.speak(utt);
-        } else {
-          appendAeroMsg('aero', reply);
+          }
           setAeroState('idle');
+        } else {
+          setAeroState('idle');
+          if (mode === 'voice') {
+            // No audio returned — show hint to check chat
+            const lbl = document.getElementById('aero-state-label');
+            if (lbl) { lbl.textContent = 'Tap AERO to read reply'; setTimeout(() => { lbl.textContent = 'Hold to speak'; }, 4000); }
+          }
         }
       } catch (err) {
         clearTimeout(timeout);
