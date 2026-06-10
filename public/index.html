@@ -1211,20 +1211,19 @@ Alex Carver`,
         const reply = data.response || 'Something went wrong — try again.';
         if (mode === 'voice') {
           setAeroState('speaking');
-          // Cancel anything pending, then speak immediately — no voice selection,
-          // no getVoices() check, no voiceschanged (all unreliable on iOS PWA)
+          // Always show reply as text — switch to chat so user gets the answer
+          // regardless of whether speech works
+          appendAeroMsg('aero', reply);
+          if (!aeroInChat) switchAeroToChat();
+          // Attempt speech in parallel
           speechSynthesis.cancel();
           const utt = new SpeechSynthesisUtterance(reply);
           utt.lang = 'en-GB';
           utt.rate = 0.95;
           utt.pitch = 1.0;
-          utt.onend = () => setAeroState('idle');
-          utt.onerror = () => {
-            // Speech failed — show in chat as fallback
-            setAeroState('idle');
-            appendAeroMsg('aero', reply);
-            if (!aeroInChat) switchAeroToChat();
-          };
+          const speechTimeout = setTimeout(() => setAeroState('idle'), 15000);
+          utt.onend = () => { clearTimeout(speechTimeout); setAeroState('idle'); };
+          utt.onerror = () => { clearTimeout(speechTimeout); setAeroState('idle'); };
           speechSynthesis.speak(utt);
         } else {
           appendAeroMsg('aero', reply);
