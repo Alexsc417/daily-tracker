@@ -1108,6 +1108,17 @@ Alex Carver`,
         || null;
     }
 
+    // ── Unlock SpeechSynthesis on first gesture (iOS requirement) ─────────
+    let aeroSpeechUnlocked = false;
+    function unlockSpeech() {
+      if (aeroSpeechUnlocked) return;
+      aeroSpeechUnlocked = true;
+      const utt = new SpeechSynthesisUtterance('');
+      utt.volume = 0;
+      speechSynthesis.speak(utt);
+      speechSynthesis.cancel();
+    }
+
     // ── Press and hold ────────────────────────────────────────────────────
     const aeroCanvas = document.getElementById('aero-canvas');
     let aeroAutoReleaseTimer = null;
@@ -1115,6 +1126,7 @@ Alex Carver`,
     function onAeroHoldStart(e) {
       e.preventDefault();
       e.stopPropagation();
+      unlockSpeech(); // unlock on gesture while still in user gesture stack
       if (aeroState !== 'idle') return;
       aeroHolding = true;
       startAeroListening();
@@ -1198,6 +1210,7 @@ Alex Carver`,
         const reply = data.response || 'Something went wrong — try again.';
         if (mode === 'voice') {
           setAeroState('speaking');
+          speechSynthesis.cancel(); // clear any stale queue
           const speak = () => {
             const utt = new SpeechSynthesisUtterance(reply);
             const voice = getBestVoice();
@@ -1206,6 +1219,7 @@ Alex Carver`,
             utt.rate = 0.95;
             utt.pitch = 1.0;
             utt.onend = () => setAeroState('idle');
+            utt.onerror = () => setAeroState('idle');
             speechSynthesis.speak(utt);
           };
           if (speechSynthesis.getVoices().length) { speak(); }
