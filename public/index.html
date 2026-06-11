@@ -1022,7 +1022,7 @@ Alex Carver`,
     let aeroRecognition = null;
     let aeroTranscript = '';
     let aeroFinalTranscript = '';
-    let aeroCtx2d, aeroParticles2d, aeroAnimFrame;
+    let aeroScene, aeroCamera, aeroRenderer, aeroParticles, aeroBasePos;
     let aeroHolding = false;
 
     // ── Orb size: 85% of container width ─────────────────────────────────
@@ -1033,123 +1033,135 @@ Alex Carver`,
     }
 
     function initAeroOrb() {
+      if (!window.THREE) return;
       const canvas = document.getElementById('aero-canvas');
       const S = getAeroSize();
-      canvas.width = S * devicePixelRatio; canvas.height = S * devicePixelRatio;
+      canvas.width = S; canvas.height = S;
       canvas.style.width = S + 'px'; canvas.style.height = S + 'px';
-      aeroCtx2d = canvas.getContext('2d');
-      aeroCtx2d.scale(devicePixelRatio, devicePixelRatio);
-      const cx = S/2, cy = S/2, R = S * 0.44;
 
-      // ── Build particle list ───────────────────────────────────────────
-      aeroParticles2d = [];
+      aeroScene = new THREE.Scene();
+      aeroCamera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+      aeroCamera.position.z = 3.2;
+
+      aeroRenderer = new THREE.WebGLRenderer({ canvas, alpha: true, antialias: true });
+      aeroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+      aeroRenderer.setSize(S, S);
+      aeroRenderer.setClearColor(0x000000, 0);
+
+      // ── Generate Claude logo shape as 3D particle cloud ───────────────
+      // The Claude logo is a nautilus-style swirl — outer arc + inner spiral
+      const pts = [];
       const TAU = Math.PI * 2;
 
-      // Circle outline (dark purple ring)
-      for (let i = 0; i < 320; i++) {
-        const a = TAU * i / 320 + Math.random() * 0.02;
-        const r = R + Math.random() * 3 - 1.5;
-        aeroParticles2d.push({ x: Math.cos(a)*r, y: Math.sin(a)*r, type: 'ring', ox: Math.cos(a)*r, oy: Math.sin(a)*r });
+      // Outer swirl: thick arc ~300 degrees, sweeping from wide to narrow
+      const outerLayers = 6;
+      for (let layer = 0; layer < outerLayers; layer++) {
+        const rOuter = 0.85 + layer * 0.02;
+        const count = 180;
+        for (let i = 0; i < count; i++) {
+          const t = i / count;
+          const angle = TAU * 0.08 + t * TAU * 0.82; // ~295 degree arc
+          const r = rOuter - t * 0.08; // slight taper
+          const x = Math.cos(angle) * r;
+          const y = Math.sin(angle) * r;
+          const z = (Math.random() - 0.5) * 0.18;
+          pts.push([x, y, z]);
+        }
       }
 
-      // Sparse fill inside coin
-      for (let i = 0; i < 250; i++) {
-        const a = Math.random() * TAU, r = Math.random() * R * 0.92;
-        aeroParticles2d.push({ x: Math.cos(a)*r, y: Math.sin(a)*r, type: 'fill', ox: Math.cos(a)*r, oy: Math.sin(a)*r });
+      // Inner spiral — curls from the end of the outer arc toward centre
+      const spiralTurns = 1.4;
+      const spiralCount = 220;
+      for (let i = 0; i < spiralCount; i++) {
+        const t = i / spiralCount;
+        const angle = TAU * 0.08 + TAU * 0.82 + t * TAU * spiralTurns;
+        const r = 0.78 - t * 0.68; // spirals inward to ~0.1
+        const x = Math.cos(angle) * r;
+        const y = Math.sin(angle) * r;
+        const z = (Math.random() - 0.5) * 0.12;
+        // Add a few particles in a band around each spiral point
+        for (let j = 0; j < 3; j++) {
+          const jitter = 0.04;
+          pts.push([x + (Math.random()-0.5)*jitter, y + (Math.random()-0.5)*jitter, z + (Math.random()-0.5)*0.08]);
+        }
       }
 
-      // Castle outline (light purple) — coords in pixel space, centre 0,0
-      const castle = [];
-      function cln(x1,y1,x2,y2,n){ for(let i=0;i<=n;i++){const t=i/n; castle.push([x1+(x2-x1)*t, y1+(y2-y1)*t]);} }
-      function carc(acx,acy,ar,a0,a1,n){ for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n; castle.push([acx+Math.cos(a)*ar, acy+Math.sin(a)*ar]);} }
-      const sc = R * 0.58; // scale castle to fit inside coin
+      // Rounded cap at the open end of the outer arc
+      for (let i = 0; i < 40; i++) {
+        const a = TAU * 0.08 + (Math.random() - 0.5) * 0.3;
+        const r = 0.7 + Math.random() * 0.2;
+        pts.push([Math.cos(a)*r, Math.sin(a)*r, (Math.random()-0.5)*0.15]);
+      }
 
-      // Tower walls & floor
-      cln(-0.3,-0.72,-0.3, 0.22,18); cln(0.3,-0.72,0.3, 0.22,18);
-      cln(-0.3,-0.72, 0.3,-0.72, 10);
+      // Scatter a haze of particles around the whole shape for depth
+      for (let i = 0; i < 120; i++) {
+        const a = Math.random() * TAU;
+        const r = 0.1 + Math.random() * 0.75;
+        pts.push([Math.cos(a)*r, Math.sin(a)*r, (Math.random()-0.5)*0.3]);
+      }
 
-      // 3 battlements
-      const merlons = [[-0.3,-0.12],[-0.06,0.12],[0.18,0.3]];
-      merlons.forEach(([bx,bx2])=>{
-        cln(bx,0.22,bx2,0.22,4); cln(bx,0.22,bx,0.52,4);
-        cln(bx2,0.22,bx2,0.52,4); cln(bx,0.52,bx2,0.52,4);
+      const N = pts.length;
+      const pos = new Float32Array(N * 3);
+      aeroBasePos = new Float32Array(N * 3);
+      pts.forEach(([x,y,z], i) => {
+        pos[i*3] = aeroBasePos[i*3] = x;
+        pos[i*3+1] = aeroBasePos[i*3+1] = y;
+        pos[i*3+2] = aeroBasePos[i*3+2] = z;
       });
 
-      // Door arch
-      carc(0,-0.08,0.16,Math.PI,0,10);
-      cln(-0.16,-0.08,-0.16,-0.72,6); cln(0.16,-0.08,0.16,-0.72,6);
+      const geo = new THREE.BufferGeometry();
+      geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
+      const mat = new THREE.PointsMaterial({ color: 0x7c3aed, size: 0.032, transparent: true, opacity: 0.92 });
+      aeroParticles = new THREE.Points(geo, mat);
+      aeroScene.add(aeroParticles);
 
-      // Window
-      cln(-0.08,0.06,0.08,0.06,4); cln(-0.08,-0.06,0.08,-0.06,4);
-      cln(-0.08,0.06,-0.08,-0.06,3); cln(0.08,0.06,0.08,-0.06,3);
-
-      // Chains
-      for (let i = 0; i < 5; i++) {
-        castle.push([-0.22,-0.72-i*0.13]); castle.push([0.22,-0.72-i*0.13]);
-        if (i < 4) { castle.push([-0.22+(i%2)*0.07,-0.78-i*0.13]); castle.push([0.22-(i%2)*0.07,-0.78-i*0.13]); }
-      }
-
-      castle.forEach(([px,py]) => {
-        const x = px*sc, y = -py*sc;
-        aeroParticles2d.push({ x, y, type: 'castle', ox: x, oy: y });
-      });
-
-      // ── Animation loop ────────────────────────────────────────────────
-      function loop() {
-        aeroAnimFrame = requestAnimationFrame(loop);
+      // ── Animation — vibrate in place, barely rotate ───────────────────
+      (function loop() {
+        requestAnimationFrame(loop);
         aeroTime += 0.016;
-        aeroCtx2d.clearRect(0, 0, S, S);
+        const p = aeroParticles.geometry.attributes.position;
 
-        const stateColors = { idle: '#7c3aed', listening: '#a78bfa', processing: '#6d28d9', speaking: '#8b5cf6' };
-        const ringCol = stateColors[aeroState] || '#7c3aed';
+        for (let i = 0; i < N; i++) {
+          const bx = aeroBasePos[i*3], by = aeroBasePos[i*3+1], bz = aeroBasePos[i*3+2];
+          let vx = 0, vy = 0, vz = 0;
 
-        aeroParticles2d.forEach((p, i) => {
-          let scale = 1, alpha = 1;
           if (aeroState === 'idle') {
-            scale = 1 + 0.022 * Math.sin(aeroTime * 0.9 + i * 0.04);
+            // Gentle slow vibration — each particle oscillates independently
+            vx = 0.012 * Math.sin(aeroTime * 0.8 + i * 0.17);
+            vy = 0.012 * Math.cos(aeroTime * 0.7 + i * 0.13);
+            vz = 0.008 * Math.sin(aeroTime * 0.6 + i * 0.21);
           } else if (aeroState === 'listening') {
-            scale = 1 + 0.12 * Math.sin(aeroTime * 2.8 + i * 0.06);
-            alpha = 0.7 + 0.3 * Math.sin(aeroTime * 3 + i * 0.05);
+            vx = 0.04 * Math.sin(aeroTime * 2.5 + i * 0.2);
+            vy = 0.04 * Math.cos(aeroTime * 2.2 + i * 0.18);
+            vz = 0.02 * Math.sin(aeroTime * 3 + i * 0.15);
           } else if (aeroState === 'processing') {
-            scale = 0.88 + 0.07 * Math.sin(aeroTime * 5 + i * 0.04);
+            vx = 0.025 * Math.sin(aeroTime * 4 + i * 0.25);
+            vy = 0.025 * Math.cos(aeroTime * 3.8 + i * 0.22);
+            vz = 0.015 * Math.sin(aeroTime * 4.5 + i * 0.19);
           } else if (aeroState === 'speaking') {
-            scale = 1 + 0.08 * Math.sin(aeroTime * 5.5 + p.oy * 0.04 + i * 0.02);
+            vx = 0.03 * Math.sin(aeroTime * 5 + i * 0.3 + by * 5);
+            vy = 0.03 * Math.cos(aeroTime * 4.5 + i * 0.27);
+            vz = 0.018 * Math.sin(aeroTime * 5.5 + i * 0.24);
           }
 
-          const px = cx + p.ox * scale;
-          const py = cy + p.oy * scale;
+          p.array[i*3]   = bx + vx;
+          p.array[i*3+1] = by + vy;
+          p.array[i*3+2] = bz + vz;
+        }
+        p.needsUpdate = true;
 
-          if (p.type === 'ring') {
-            aeroCtx2d.globalAlpha = alpha * 0.9;
-            aeroCtx2d.fillStyle = ringCol;
-            aeroCtx2d.beginPath();
-            aeroCtx2d.arc(px, py, 1.6, 0, TAU);
-            aeroCtx2d.fill();
-          } else if (p.type === 'fill') {
-            aeroCtx2d.globalAlpha = alpha * 0.12;
-            aeroCtx2d.fillStyle = ringCol;
-            aeroCtx2d.beginPath();
-            aeroCtx2d.arc(px, py, 1.0, 0, TAU);
-            aeroCtx2d.fill();
-          } else {
-            // castle — always light purple, gentle pulse
-            const cs = 1 + 0.015 * Math.sin(aeroTime * 1.2 + i * 0.09);
-            aeroCtx2d.globalAlpha = 0.95;
-            aeroCtx2d.fillStyle = '#c4b5fd';
-            aeroCtx2d.beginPath();
-            aeroCtx2d.arc(cx + p.ox * cs, cy + p.oy * cs, 2.0, 0, TAU);
-            aeroCtx2d.fill();
-          }
-        });
-        aeroCtx2d.globalAlpha = 1;
-      }
-      loop();
+        // Very slow drift rotation — barely noticeable
+        aeroParticles.rotation.y += 0.0015;
+        aeroParticles.rotation.z += 0.0005;
+        aeroRenderer.render(aeroScene, aeroCamera);
+      })();
     }
 
     const AERO_STATE_LABELS = { idle: 'Hold to speak', listening: 'Listening...', processing: 'Thinking...', speaking: 'Replying...' };
 
     function setAeroState(s) {
       aeroState = s;
+      if (aeroParticles) aeroParticles.material.color.setHex(AERO_COLORS[s]);
       const lbl = document.getElementById('aero-state-label');
       if (lbl) lbl.textContent = AERO_STATE_LABELS[s] || '';
     }
