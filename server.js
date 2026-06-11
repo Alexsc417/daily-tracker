@@ -334,39 +334,38 @@ When asked about performance, give actionable advice based on the actual numbers
     if (data.error) return res.status(500).json({ error: data.error.message });
     const responseText = data.content[0].text;
 
-    // ── ElevenLabs TTS ──────────────────────────────────────────────────
-    const elevenKey = process.env.ELEVENLABS_API_KEY;
-    const voiceId   = process.env.ELEVENLABS_VOICE_ID;
+    // ── OpenAI TTS ──────────────────────────────────────────────────────
+    const openaiKey = process.env.OPENAI_API_KEY;
     let audioBase64 = null;
-
     let audioError = null;
-    if (elevenKey && voiceId) {
+
+    if (openaiKey) {
       try {
-        const ttsRes = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${voiceId}`, {
+        const ttsRes = await fetch('https://api.openai.com/v1/audio/speech', {
           method: 'POST',
           headers: {
-            'xi-api-key': elevenKey,
+            'Authorization': `Bearer ${openaiKey}`,
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            text: responseText,
-            model_id: 'eleven_multilingual_v2',
-            voice_settings: { stability: 0.5, similarity_boost: 0.75 },
+            model: 'tts-1',
+            input: responseText,
+            voice: 'fable',
           }),
         });
         if (ttsRes.ok) {
           const arrayBuf = await ttsRes.arrayBuffer();
           audioBase64 = Buffer.from(arrayBuf).toString('base64');
         } else {
-          audioError = `ElevenLabs ${ttsRes.status}: ${await ttsRes.text()}`;
-          console.error('ElevenLabs error:', audioError);
+          audioError = `OpenAI TTS ${ttsRes.status}: ${await ttsRes.text()}`;
+          console.error('OpenAI TTS error:', audioError);
         }
       } catch (ttsErr) {
         audioError = ttsErr.message;
-        console.error('ElevenLabs TTS failed:', ttsErr.message);
+        console.error('OpenAI TTS failed:', ttsErr.message);
       }
     } else {
-      audioError = `Missing env vars — ELEVENLABS_API_KEY: ${!!elevenKey}, ELEVENLABS_VOICE_ID: ${!!voiceId}`;
+      audioError = 'Missing OPENAI_API_KEY env var';
     }
 
     res.json({ response: responseText, audio: audioBase64, audioError });
