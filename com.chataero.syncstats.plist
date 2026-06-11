@@ -9,15 +9,8 @@
         <string>/usr/bin/python3</string>
         <string>/Users/alexcarver/daily-tracker/sync_stats.py</string>
     </array>
-    <key>StartCalendarInterval</key>
-    <dict>
-        <key>Hour</key>
-        <integer>8</integer>
-        <key>Minute</key>
-        <integer>0</integer>
-    </dict>
     <key>RunAtLoad</key>
-    <false/>
+    <true/>
     <key>StandardOutPath</key>
     <string>/tmp/chataero_sync.log</string>
     <key>StandardErrorPath</key>
