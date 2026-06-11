@@ -359,27 +359,6 @@
       user-select: none;
       touch-action: none;
     }
-    .aero-orb-wrapper {
-      position: relative;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-    .aero-shockwave {
-      position: absolute;
-      border-radius: 50%;
-      border: 2px solid rgba(167, 139, 250, 0.7);
-      pointer-events: none;
-      opacity: 0;
-      transform: scale(0);
-    }
-    .aero-shockwave.fire {
-      animation: shockwave 0.9s cubic-bezier(0.2, 0.6, 0.4, 1) forwards;
-    }
-    @keyframes shockwave {
-      0%   { transform: scale(0.5); opacity: 0.7; border-color: rgba(167,139,250,0.7); }
-      100% { transform: scale(2.8); opacity: 0;   border-color: rgba(167,139,250,0); }
-    }
     .aero-label {
       font-size: 0.62rem;
       font-weight: 700;
@@ -621,10 +600,7 @@
       <div class="aero-section" id="aero-section">
         <div class="aero-orb-panel" id="aero-orb-panel">
           <div class="aero-label aero-label-btn" id="aero-to-chat-btn">AERO</div>
-          <div class="aero-orb-wrapper" id="aero-orb-wrapper">
-            <canvas id="aero-canvas" width="260" height="260"></canvas>
-            <div class="aero-shockwave" id="aero-shockwave"></div>
-          </div>
+          <canvas id="aero-canvas" width="260" height="260"></canvas>
           <div class="aero-state-label" id="aero-state-label">Hold to speak</div>
         </div>
         <div class="aero-chat-panel" id="aero-chat-panel">
@@ -1052,8 +1028,8 @@ Alex Carver`,
     // ── Orb size: 85% of container width ─────────────────────────────────
     function getAeroSize() {
       const section = document.getElementById('aero-section');
-      const w = section ? Math.floor(section.clientWidth * 0.95) : 280;
-      return Math.min(w, 380);
+      const w = section ? Math.floor(section.clientWidth * 0.85) : 260;
+      return Math.min(w, 340);
     }
 
     function initAeroOrb() {
@@ -1071,10 +1047,6 @@ Alex Carver`,
       aeroRenderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
       aeroRenderer.setSize(S, S);
       aeroRenderer.setClearColor(0x000000, 0);
-
-      // Size shockwave to match orb
-      const sw = document.getElementById('aero-shockwave');
-      if (sw) { sw.style.width = S + 'px'; sw.style.height = S + 'px'; }
 
       // ── Plain sphere particle cloud ───────────────────────────────────
       const pts = [];
@@ -1191,9 +1163,6 @@ Alex Carver`,
       unlockAudio(); // unlock AudioContext while still in user gesture stack
       if (aeroState !== 'idle') return;
       aeroHolding = true;
-      // Shockwave ripple
-      const sw = document.getElementById('aero-shockwave');
-      if (sw) { sw.classList.remove('fire'); void sw.offsetWidth; sw.classList.add('fire'); }
       startAeroListening();
       // Safety auto-release after 15s in case touchend doesn't fire
       clearTimeout(aeroAutoReleaseTimer);
