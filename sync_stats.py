@@ -20,7 +20,7 @@ from datetime import datetime, timedelta
 from pathlib import Path
 
 EXCEL_PATH = Path.home() / "chataero-context" / "ChatAero Leads.xlsx"
-RAILWAY_URL = "https://dailytracker.up.railway.app/api/stats"
+RAILWAY_URL = "https://aero.up.railway.app/api/stats"
 
 TEMPLATE_MAP = {
     'A': 'free-demo',
