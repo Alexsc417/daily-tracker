@@ -1022,7 +1022,7 @@ Alex Carver`,
     let aeroRecognition = null;
     let aeroTranscript = '';
     let aeroFinalTranscript = '';
-    let aeroScene, aeroCamera, aeroRenderer, aeroParticles, aeroBasePos;
+    let aeroScene, aeroCamera, aeroRenderer, aeroParticles, aeroBasePos, aeroCastleParticles, aeroCastleBasePos, aeroOrbGroup;
     let aeroHolding = false;
 
     // ── Orb size: 85% of container width ─────────────────────────────────
@@ -1048,31 +1048,99 @@ Alex Carver`,
       aeroRenderer.setSize(S, S);
       aeroRenderer.setClearColor(0x000000, 0);
 
-      const N = 750;
+      aeroOrbGroup = new THREE.Group();
+      aeroScene.add(aeroOrbGroup);
+
+      // ── Sphere base particles ──────────────────────────────────────────
+      const N = 600;
       const pos = new Float32Array(N * 3);
       aeroBasePos = new Float32Array(N * 3);
-      const phi = Math.PI * (3 - Math.sqrt(5));
+      const goldenPhi = Math.PI * (3 - Math.sqrt(5));
       for (let i = 0; i < N; i++) {
         const y = 1 - (i / (N - 1)) * 2;
         const r = Math.sqrt(1 - y * y);
-        const theta = phi * i;
+        const theta = goldenPhi * i;
         const x = Math.cos(theta) * r, z = Math.sin(theta) * r;
         pos[i*3] = aeroBasePos[i*3] = x;
         pos[i*3+1] = aeroBasePos[i*3+1] = y;
         pos[i*3+2] = aeroBasePos[i*3+2] = z;
       }
-
       const geo = new THREE.BufferGeometry();
       geo.setAttribute('position', new THREE.BufferAttribute(pos, 3));
-      const mat = new THREE.PointsMaterial({ color: AERO_COLORS.idle, size: 0.03, transparent: true, opacity: 0.9 });
+      const mat = new THREE.PointsMaterial({ color: AERO_COLORS.idle, size: 0.025, transparent: true, opacity: 0.8 });
       aeroParticles = new THREE.Points(geo, mat);
-      aeroScene.add(aeroParticles);
+      aeroOrbGroup.add(aeroParticles);
 
+      // ── Castle constellation particles ────────────────────────────────
+      // Define castle in 2D then project onto sphere surface
+      const c2d = [];
+      function ln(x1,y1,x2,y2,n){ for(let i=0;i<=n;i++){const t=i/n;c2d.push([x1+(x2-x1)*t,y1+(y2-y1)*t]);} }
+      function arc(cx,cy,r,a0,a1,n){ for(let i=0;i<=n;i++){const a=a0+(a1-a0)*i/n;c2d.push([cx+Math.cos(a)*r,cy+Math.sin(a)*r]);} }
+
+      // Tower body (left wall, right wall, floor)
+      ln(-0.14,-0.38,-0.14, 0.12,16);
+      ln( 0.14,-0.38, 0.14, 0.12,16);
+      ln(-0.14,-0.38, 0.14,-0.38, 8);
+
+      // 3 battlements across top
+      [[-0.14,-0.035],[0.045,0.045],[0.045,0.14]].forEach(([bx,bx2])=>{});
+      const merlons = [[-0.14,-0.06],[-0.02,0.06],[0.07,0.14]];
+      merlons.forEach(([bx,bx2])=>{
+        ln(bx, 0.12, bx2, 0.12, 4);
+        ln(bx, 0.12, bx, 0.28, 4);
+        ln(bx2,0.12, bx2,0.28, 4);
+        ln(bx, 0.28, bx2,0.28, 4);
+      });
+      // gaps between merlons (floor level of gap)
+      ln(-0.06, 0.12,-0.02, 0.12, 2);
+      ln( 0.06, 0.12, 0.07, 0.12, 2);
+
+      // Door arch (centre bottom)
+      arc(0,-0.1,0.07,Math.PI,0,10);
+      ln(-0.07,-0.1,-0.07,-0.38,5);
+      ln( 0.07,-0.1, 0.07,-0.38,5);
+
+      // Small window above door
+      ln(-0.035,0.0, 0.035,0.0,3);
+      ln(-0.035,0.0,-0.035,-0.06,2);
+      ln( 0.035,0.0, 0.035,-0.06,2);
+      ln(-0.035,-0.06,0.035,-0.06,3);
+
+      // Chains hanging from bottom corners
+      for(let i=0;i<5;i++){
+        c2d.push([-0.1,-0.38-i*0.055]);
+        c2d.push([ 0.1,-0.38-i*0.055]);
+        if(i<4){
+          c2d.push([-0.1+(i%2)*0.03,-0.38-i*0.055-0.027]);
+          c2d.push([ 0.1-(i%2)*0.03,-0.38-i*0.055-0.027]);
+        }
+      }
+
+      // Project 2D onto sphere
+      const sc = 0.9;
+      const castlePos = new Float32Array(c2d.length * 3);
+      aeroCastleBasePos = new Float32Array(c2d.length * 3);
+      c2d.forEach(([x2d,y2d],i)=>{
+        const az = x2d*sc, el = y2d*sc;
+        const sx = Math.sin(az)*Math.cos(el);
+        const sy = Math.sin(el);
+        const sz = Math.cos(az)*Math.cos(el);
+        castlePos[i*3] = aeroCastleBasePos[i*3] = sx;
+        castlePos[i*3+1] = aeroCastleBasePos[i*3+1] = sy;
+        castlePos[i*3+2] = aeroCastleBasePos[i*3+2] = sz;
+      });
+      const castleGeo = new THREE.BufferGeometry();
+      castleGeo.setAttribute('position', new THREE.BufferAttribute(castlePos, 3));
+      const castleMat = new THREE.PointsMaterial({ color: 0xc4b5fd, size: 0.048, transparent: true, opacity: 1.0 });
+      aeroCastleParticles = new THREE.Points(castleGeo, castleMat);
+      aeroOrbGroup.add(aeroCastleParticles);
+
+      // ── Animation loop ────────────────────────────────────────────────
       (function loop() {
         requestAnimationFrame(loop);
         aeroTime += 0.016;
         const p = aeroParticles.geometry.attributes.position;
-        for (let i = 0, N = p.count; i < N; i++) {
+        for (let i = 0; i < N; i++) {
           const bx = aeroBasePos[i*3], by = aeroBasePos[i*3+1], bz = aeroBasePos[i*3+2];
           let s = 1;
           if (aeroState === 'idle')            s = 1 + 0.025 * Math.sin(aeroTime * 0.9 + i * 0.01);
@@ -1082,9 +1150,18 @@ Alex Carver`,
           p.array[i*3] = bx*s; p.array[i*3+1] = by*s; p.array[i*3+2] = bz*s;
         }
         p.needsUpdate = true;
+        // Castle pulses gently independent of state
+        const cp = aeroCastleParticles.geometry.attributes.position;
+        for (let i = 0; i < cp.count; i++) {
+          const s = 1 + 0.012 * Math.sin(aeroTime * 1.1 + i * 0.09);
+          cp.array[i*3]   = aeroCastleBasePos[i*3]   * s;
+          cp.array[i*3+1] = aeroCastleBasePos[i*3+1] * s;
+          cp.array[i*3+2] = aeroCastleBasePos[i*3+2] * s;
+        }
+        cp.needsUpdate = true;
         const spd = aeroState === 'processing' ? 0.022 : aeroState === 'speaking' ? 0.013 : 0.006;
-        aeroParticles.rotation.y += spd;
-        aeroParticles.rotation.x += spd * 0.35;
+        aeroOrbGroup.rotation.y += spd;
+        aeroOrbGroup.rotation.x += spd * 0.35;
         aeroRenderer.render(aeroScene, aeroCamera);
       })();
     }
@@ -1094,6 +1171,7 @@ Alex Carver`,
     function setAeroState(s) {
       aeroState = s;
       if (aeroParticles) aeroParticles.material.color.setHex(AERO_COLORS[s]);
+      // Castle stays light purple always — don't change its colour
       const lbl = document.getElementById('aero-state-label');
       if (lbl) lbl.textContent = AERO_STATE_LABELS[s] || '';
     }
