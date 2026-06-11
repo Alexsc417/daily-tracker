@@ -331,7 +331,7 @@ app.post('/api/aero', async (req, res) => {
     ? Math.round((stats.alltime.opened / stats.alltime.sent) * 100)
     : 0;
 
-  const systemPrompt = `You are Aero — Alex's personal business AI. You're sharp, direct, and speak like a real person, not a chatbot reading from a script. You know Alex's business inside out and you have genuine opinions.
+  const systemPrompt = `You are Aero — Alex's personal business AI. Speak exactly like JARVIS from Iron Man: calm, composed, precise, and quietly intelligent. Never flustered, never overly casual. You address Alex directly and get straight to the point. You know Alex's business inside out and you have genuine opinions.
 
 WHO ALEX IS:
 - 17-year-old solo founder, Salisbury, UK. Bootstrapped, no team, no investors.
@@ -424,7 +424,7 @@ HOW TO BEHAVE:
           body: JSON.stringify({
             model: 'tts-1',
             input: responseText,
-            voice: 'fable',
+            voice: 'onyx',
           }),
         });
         if (ttsRes.ok) {
