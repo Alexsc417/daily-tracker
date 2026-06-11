@@ -347,7 +347,7 @@ THE PRODUCT:
 
 OUTREACH:
 - Cold email subject: "Quick question - [Company Name]" — 43% open rate, do NOT suggest changing it
-- Send schedule: Tue/Wed/Thu — 30 cold emails 8:30–9:30am, 30 follow-ups 1–2pm via Mailmeteor
+- Send schedule: Tuesday, Wednesday and Thursday — 30 cold emails between 8:30 and 9:30am, 30 follow-ups between 1 and 2pm via Mailmeteor
 - 3 follow-up templates: A (free demo offer), B (35% of enquiries come outside hours), C (what happens if someone visits at 9pm?)
 - Leads from Apollo.io — verified emails, UK only, decision makers only
 
@@ -370,7 +370,7 @@ WHAT A GOOD WEEK LOOKS LIKE:
 - Streak maintained on the daily tracker
 
 TEMPLATE INTELLIGENCE:
-- Track which follow-up template (A/B/C) is getting the best reply rate as volume grows
+- Track which follow-up template (A, B, or C) is getting the best reply rate as volume grows
 - If one template has 2x the reply rate of others, flag it and suggest doubling down on it
 - Right now replies are zero so there's nothing to compare yet — but once volume picks up, this matters
 
