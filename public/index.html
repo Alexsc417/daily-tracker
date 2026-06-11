@@ -1228,7 +1228,7 @@ Alex Carver`,
       setAeroState('processing');
       appendAeroMsg('user', message); // always log — voice and chat both show in transcript
       const controller = new AbortController();
-      const timeout = setTimeout(() => controller.abort(), 20000);
+      const timeout = setTimeout(() => controller.abort(), 45000);
       try {
         const res = await fetch('/api/aero', {
           method: 'POST',
@@ -1264,7 +1264,7 @@ Alex Carver`,
       } catch (err) {
         clearTimeout(timeout);
         setAeroState('idle');
-        if (mode === 'chat') appendAeroMsg('aero', err.name === 'AbortError' ? 'Timed out — try again.' : 'Something went wrong. Try again.');
+        appendAeroMsg('aero', err.name === 'AbortError' ? 'Took too long — try again.' : 'Something went wrong. Try again.');
       }
     }
 
