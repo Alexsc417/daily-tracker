@@ -600,10 +600,7 @@
       <div class="aero-section" id="aero-section">
         <div class="aero-orb-panel" id="aero-orb-panel">
           <div class="aero-label aero-label-btn" id="aero-to-chat-btn">AERO</div>
-          <div style="position:relative;display:inline-block;">
-            <canvas id="aero-shockwave-canvas" style="position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);pointer-events:none;z-index:1;"></canvas>
-            <canvas id="aero-canvas" width="260" height="260" style="position:relative;z-index:2;"></canvas>
-          </div>
+          <canvas id="aero-canvas" width="260" height="260"></canvas>
           <div class="aero-state-label" id="aero-state-label">Hold to speak</div>
         </div>
         <div class="aero-chat-panel" id="aero-chat-panel">
@@ -1028,11 +1025,11 @@ Alex Carver`,
     let aeroScene, aeroCamera, aeroRenderer, aeroParticles, aeroBasePos;
     let aeroHolding = false;
 
-    // ── Orb size: 93% of container width ─────────────────────────────────
+    // ── Orb size: 85% of container width ─────────────────────────────────
     function getAeroSize() {
       const section = document.getElementById('aero-section');
-      const w = section ? Math.floor(section.clientWidth * 0.93) : 280;
-      return Math.min(w, 420);
+      const w = section ? Math.floor(section.clientWidth * 0.85) : 260;
+      return Math.min(w, 340);
     }
 
     function initAeroOrb() {
@@ -1156,44 +1153,6 @@ Alex Carver`,
       });
     }
 
-    // ── Shockwave ─────────────────────────────────────────────────────────
-    function triggerShockwave() {
-      const sw = document.getElementById('aero-shockwave-canvas');
-      const orbCanvas = document.getElementById('aero-canvas');
-      const S = orbCanvas.clientWidth || 280;
-      // Make shockwave canvas big enough to fill the whole orb panel
-      const panel = document.getElementById('aero-orb-panel');
-      const W = panel ? panel.clientWidth : S * 1.1;
-      const H = panel ? panel.clientHeight : S * 1.1;
-      const dim = Math.max(W, H) * 1.05;
-      sw.width = dim; sw.height = dim;
-      sw.style.width = dim + 'px'; sw.style.height = dim + 'px';
-      const ctx = sw.getContext('2d');
-      const cx = dim / 2, cy = dim / 2;
-      const startR = S * 0.38;   // where orb surface roughly is
-      const endR   = dim * 0.52; // just past the panel edge
-      const duration = 1600;     // ms — slow and deliberate
-      let startTime = null;
-
-      function draw(ts) {
-        if (!startTime) startTime = ts;
-        const t = Math.min((ts - startTime) / duration, 1);
-        const eased = t < 0.5 ? 2*t*t : -1+(4-2*t)*t; // ease in-out
-        ctx.clearRect(0, 0, dim, dim);
-        const r = startR + (endR - startR) * eased;
-        const opacity = (1 - eased) * 0.72;
-        const thickness = (dim * 0.09) * (1 - eased * 0.4); // thick, tapers slightly
-        ctx.beginPath();
-        ctx.arc(cx, cy, r, 0, Math.PI * 2);
-        ctx.strokeStyle = `rgba(124, 58, 237, ${opacity})`;
-        ctx.lineWidth = thickness;
-        ctx.stroke();
-        if (t < 1) requestAnimationFrame(draw);
-        else ctx.clearRect(0, 0, dim, dim);
-      }
-      requestAnimationFrame(draw);
-    }
-
     // ── Press and hold ────────────────────────────────────────────────────
     const aeroCanvas = document.getElementById('aero-canvas');
     let aeroAutoReleaseTimer = null;
@@ -1204,7 +1163,6 @@ Alex Carver`,
       unlockAudio(); // unlock AudioContext while still in user gesture stack
       if (aeroState !== 'idle') return;
       aeroHolding = true;
-      triggerShockwave();
       startAeroListening();
       // Safety auto-release after 15s in case touchend doesn't fire
       clearTimeout(aeroAutoReleaseTimer);
