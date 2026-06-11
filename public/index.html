@@ -1160,29 +1160,42 @@ Alex Carver`,
     document.addEventListener('touchend', e => { if (aeroHolding) onAeroHoldEnd(e); }, { passive: false });
     document.addEventListener('mouseup', e => { if (aeroHolding) onAeroHoldEnd(e); });
 
+    let aeroRecognitionCount = 0;
+
     function startAeroListening() {
       const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
       if (!SR) { switchAeroToChat(); return; }
       aeroTranscript = '';
       aeroFinalTranscript = '';
-      aeroRecognition = new SR();
-      aeroRecognition.continuous = true;
-      aeroRecognition.interimResults = true;
-      aeroRecognition.lang = 'en-GB';
-      aeroRecognition.onresult = e => {
-        for (let i = e.resultIndex; i < e.results.length; i++) {
-          if (e.results[i].isFinal) {
-            aeroFinalTranscript += e.results[i][0].transcript + ' ';
-          } else {
-            aeroTranscript = e.results[i][0].transcript;
+      const isFirstAttempt = aeroRecognitionCount === 0;
+      aeroRecognitionCount++;
+
+      const doStart = () => {
+        aeroRecognition = new SR();
+        aeroRecognition.continuous = true;
+        aeroRecognition.interimResults = true;
+        aeroRecognition.lang = 'en-GB';
+        aeroRecognition.onresult = e => {
+          for (let i = e.resultIndex; i < e.results.length; i++) {
+            if (e.results[i].isFinal) {
+              aeroFinalTranscript += e.results[i][0].transcript + ' ';
+            } else {
+              aeroTranscript = e.results[i][0].transcript;
+            }
           }
-        }
+        };
+        aeroRecognition.onerror = () => { aeroRecognition = null; setAeroState('idle'); };
+        aeroRecognition.onend = () => { aeroRecognition = null; };
+        aeroRecognition.start();
+        setAeroState('listening');
       };
-      aeroRecognition.onerror = () => { aeroRecognition = null; setAeroState('idle'); };
-      // onend is a safety fallback only — release captures transcript directly
-      aeroRecognition.onend = () => { aeroRecognition = null; };
-      aeroRecognition.start();
-      setAeroState('listening');
+
+      // iOS needs a moment to switch audio session from playback → recording
+      if (isFirstAttempt) {
+        doStart();
+      } else {
+        setTimeout(doStart, 350);
+      }
     }
 
     function releaseAeroListening() {
@@ -1223,6 +1236,8 @@ Alex Carver`,
             const lbl = document.getElementById('aero-state-label');
             if (lbl) { lbl.textContent = 'Tap AERO to read reply'; setTimeout(() => { lbl.textContent = 'Hold to speak'; }, 4000); }
           }
+          // Reset unlock flag so next hold re-fires silent audio, resetting iOS audio session
+          aeroAudioUnlocked = false;
           setAeroState('idle');
         } else {
           setAeroState('idle');
