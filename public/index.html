@@ -1098,39 +1098,29 @@ Alex Carver`,
       if (lbl) lbl.textContent = AERO_STATE_LABELS[s] || '';
     }
 
-    // ── Web Audio playback (replaces SpeechSynthesis entirely) ───────────
-    let aeroAudioCtx = null;
-    function getAudioCtx() {
-      if (!aeroAudioCtx || aeroAudioCtx.state === 'closed') {
-        aeroAudioCtx = new (window.AudioContext || window.webkitAudioContext)();
-      }
-      return aeroAudioCtx;
+    // ── Audio playback via <audio> element (mobile-compatible) ───────────
+    const aeroAudioEl = document.createElement('audio');
+    aeroAudioEl.style.display = 'none';
+    document.body.appendChild(aeroAudioEl);
+    let aeroAudioUnlocked = false;
+
+    function unlockAudio() {
+      if (aeroAudioUnlocked) return;
+      // Play a silent data URI during the gesture to unlock the audio element on iOS
+      aeroAudioEl.src = 'data:audio/wav;base64,UklGRigAAABXQVZFZm10IBAAAAABAAEAQB8AAEAfAAABAAgAZGF0YQQAAAAAAA==';
+      aeroAudioEl.play().catch(() => {});
+      aeroAudioUnlocked = true;
     }
 
     async function playAudioBase64(base64) {
-      const ctx = getAudioCtx();
-      // iOS requires resume() after user gesture
-      if (ctx.state === 'suspended') await ctx.resume();
-      const binary = atob(base64);
-      const bytes = new Uint8Array(binary.length);
-      for (let i = 0; i < binary.length; i++) bytes[i] = binary.charCodeAt(i);
-      const audioBuf = await ctx.decodeAudioData(bytes.buffer);
-      return new Promise((resolve) => {
-        const source = ctx.createBufferSource();
-        source.buffer = audioBuf;
-        source.connect(ctx.destination);
-        source.onended = resolve;
-        source.start(0);
+      return new Promise((resolve, reject) => {
+        const blob = new Blob([Uint8Array.from(atob(base64), c => c.charCodeAt(0))], { type: 'audio/mpeg' });
+        const url = URL.createObjectURL(blob);
+        aeroAudioEl.src = url;
+        aeroAudioEl.onended = () => { URL.revokeObjectURL(url); resolve(); };
+        aeroAudioEl.onerror = (e) => { URL.revokeObjectURL(url); reject(e); };
+        aeroAudioEl.play().catch(reject);
       });
-    }
-
-    // Unlock AudioContext on first gesture (iOS requirement)
-    let aeroAudioUnlocked = false;
-    function unlockAudio() {
-      if (aeroAudioUnlocked) return;
-      aeroAudioUnlocked = true;
-      const ctx = getAudioCtx();
-      if (ctx.state === 'suspended') ctx.resume();
     }
 
     // ── Press and hold ────────────────────────────────────────────────────
