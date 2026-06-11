@@ -1166,9 +1166,17 @@ Alex Carver`,
     let aeroMicStream = null;
 
     async function startAeroListening() {
+      setAeroState('listening'); // set immediately so hold-end can detect it
       try {
         aeroAudioChunks = [];
         aeroMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        // If user already released before mic started, abort
+        if (!aeroHolding) {
+          aeroMicStream.getTracks().forEach(t => t.stop());
+          aeroMicStream = null;
+          setAeroState('idle');
+          return;
+        }
         const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
           ? 'audio/webm;codecs=opus'
           : MediaRecorder.isTypeSupported('audio/webm')
@@ -1176,8 +1184,7 @@ Alex Carver`,
           : 'audio/mp4';
         aeroMediaRecorder = new MediaRecorder(aeroMicStream, { mimeType });
         aeroMediaRecorder.ondataavailable = e => { if (e.data.size > 0) aeroAudioChunks.push(e.data); };
-        aeroMediaRecorder.start(100); // collect chunks every 100ms
-        setAeroState('listening');
+        aeroMediaRecorder.start(100);
       } catch (err) {
         console.warn('Mic access failed:', err);
         setAeroState('idle');
