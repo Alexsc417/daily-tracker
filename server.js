@@ -2,6 +2,8 @@ const express = require('express');
 const path = require('path');
 const webpush = require('web-push');
 const cron = require('node-cron');
+const multer = require('multer');
+const upload = multer({ storage: multer.memoryStorage(), limits: { fileSize: 25 * 1024 * 1024 } });
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -274,6 +276,50 @@ cron.schedule('0 18 * * *', () => {
   }, delayMs);
 
 }, { timezone: 'Europe/London' });
+
+// ── WHISPER TRANSCRIPTION ─────────────────────────────────────────────
+app.post('/api/transcribe', upload.single('audio'), async (req, res) => {
+  const openaiKey = process.env.OPENAI_API_KEY;
+  if (!openaiKey) return res.status(500).json({ error: 'No OPENAI_API_KEY' });
+  if (!req.file) return res.status(400).json({ error: 'No audio file' });
+
+  try {
+    const { FormData, Blob } = await import('node-fetch').catch(() => ({ FormData: global.FormData, Blob: global.Blob }));
+    const formData = new (globalThis.FormData || (await import('formdata-node')).FormData)();
+
+    // Use built-in fetch (Node 18+) with a blob
+    const audioBlob = new Blob([req.file.buffer], { type: req.file.mimetype || 'audio/webm' });
+
+    // Build multipart manually for Node fetch compatibility
+    const boundary = '----FormBoundary' + Math.random().toString(36).slice(2);
+    const filename = 'audio.webm';
+    const mimeType = req.file.mimetype || 'audio/webm';
+
+    const preamble = Buffer.from(
+      `--${boundary}\r\nContent-Disposition: form-data; name="file"; filename="${filename}"\r\nContent-Type: ${mimeType}\r\n\r\n`
+    );
+    const modelPart = Buffer.from(
+      `\r\n--${boundary}\r\nContent-Disposition: form-data; name="model"\r\n\r\nwhisper-1\r\n--${boundary}--\r\n`
+    );
+    const body = Buffer.concat([preamble, req.file.buffer, modelPart]);
+
+    const whisperRes = await fetch('https://api.openai.com/v1/audio/transcriptions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${openaiKey}`,
+        'Content-Type': `multipart/form-data; boundary=${boundary}`,
+      },
+      body,
+    });
+
+    const data = await whisperRes.json();
+    if (data.error) return res.status(500).json({ error: data.error.message });
+    res.json({ text: data.text || '' });
+  } catch (err) {
+    console.error('Transcribe error:', err);
+    res.status(500).json({ error: err.message });
+  }
+});
 
 // ── AERO AI ASSISTANT ────────────────────────────────────────────────
 app.post('/api/aero', async (req, res) => {

@@ -1160,54 +1160,61 @@ Alex Carver`,
     document.addEventListener('touchend', e => { if (aeroHolding) onAeroHoldEnd(e); }, { passive: false });
     document.addEventListener('mouseup', e => { if (aeroHolding) onAeroHoldEnd(e); });
 
-    let aeroRecognitionCount = 0;
+    // ── MediaRecorder-based voice capture (replaces SpeechRecognition) ──
+    let aeroMediaRecorder = null;
+    let aeroAudioChunks = [];
+    let aeroMicStream = null;
 
-    function startAeroListening() {
-      const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
-      if (!SR) { switchAeroToChat(); return; }
-      aeroTranscript = '';
-      aeroFinalTranscript = '';
-      const isFirstAttempt = aeroRecognitionCount === 0;
-      aeroRecognitionCount++;
-
-      const doStart = () => {
-        aeroRecognition = new SR();
-        aeroRecognition.continuous = true;
-        aeroRecognition.interimResults = true;
-        aeroRecognition.lang = 'en-GB';
-        aeroRecognition.onresult = e => {
-          for (let i = e.resultIndex; i < e.results.length; i++) {
-            if (e.results[i].isFinal) {
-              aeroFinalTranscript += e.results[i][0].transcript + ' ';
-            } else {
-              aeroTranscript = e.results[i][0].transcript;
-            }
-          }
-        };
-        aeroRecognition.onerror = () => { aeroRecognition = null; setAeroState('idle'); };
-        aeroRecognition.onend = () => { aeroRecognition = null; };
-        aeroRecognition.start();
+    async function startAeroListening() {
+      try {
+        aeroAudioChunks = [];
+        aeroMicStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+        const mimeType = MediaRecorder.isTypeSupported('audio/webm;codecs=opus')
+          ? 'audio/webm;codecs=opus'
+          : MediaRecorder.isTypeSupported('audio/webm')
+          ? 'audio/webm'
+          : 'audio/mp4';
+        aeroMediaRecorder = new MediaRecorder(aeroMicStream, { mimeType });
+        aeroMediaRecorder.ondataavailable = e => { if (e.data.size > 0) aeroAudioChunks.push(e.data); };
+        aeroMediaRecorder.start(100); // collect chunks every 100ms
         setAeroState('listening');
-      };
-
-      // iOS needs a moment to switch audio session from playback → recording
-      if (isFirstAttempt) {
-        doStart();
-      } else {
-        setTimeout(doStart, 350);
+      } catch (err) {
+        console.warn('Mic access failed:', err);
+        setAeroState('idle');
       }
     }
 
     function releaseAeroListening() {
-      // Capture transcript NOW — don't wait for onend (unreliable on iOS)
-      const msg = (aeroFinalTranscript + aeroTranscript).trim();
-      if (aeroRecognition) {
-        aeroRecognition.onend = null; // prevent any double-fire
-        try { aeroRecognition.stop(); } catch {}
-        aeroRecognition = null;
+      if (!aeroMediaRecorder || aeroMediaRecorder.state === 'inactive') {
+        setAeroState('idle');
+        return;
       }
-      if (!msg) { setAeroState('idle'); return; }
-      sendToAero(msg, 'voice');
+      aeroMediaRecorder.onstop = async () => {
+        // Stop all mic tracks
+        if (aeroMicStream) { aeroMicStream.getTracks().forEach(t => t.stop()); aeroMicStream = null; }
+        if (aeroAudioChunks.length === 0) { setAeroState('idle'); return; }
+
+        const mimeType = aeroMediaRecorder.mimeType || 'audio/webm';
+        const blob = new Blob(aeroAudioChunks, { type: mimeType });
+        aeroAudioChunks = [];
+        aeroMediaRecorder = null;
+
+        // Send to Whisper for transcription
+        setAeroState('processing');
+        try {
+          const fd = new FormData();
+          fd.append('audio', blob, 'audio.webm');
+          const tRes = await fetch('/api/transcribe', { method: 'POST', body: fd });
+          const tData = await tRes.json();
+          const msg = (tData.text || '').trim();
+          if (!msg) { setAeroState('idle'); return; }
+          sendToAero(msg, 'voice');
+        } catch (err) {
+          console.warn('Transcribe failed:', err);
+          setAeroState('idle');
+        }
+      };
+      aeroMediaRecorder.stop();
     }
 
     async function sendToAero(message, mode) {
